@@ -5150,11 +5150,10 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
 
-<style id="tf-fix2-css">
-.tf-fab{position:fixed;right:16px;bottom:20px;z-index:90;width:56px;height:56px;border-radius:999px;background:#18181b;color:#fff;font-size:24px;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;border:none}
-.tf-fab-chip{position:fixed;right:16px;bottom:84px;z-index:90;display:flex;align-items:center;gap:6px;background:#fff;border:2px solid #18181b;border-radius:14px;padding:4px 6px 4px 4px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
-.tf-fab-chip img{width:44px;height:44px;object-fit:cover;border-radius:9px;display:block}
-.tf-fab-chip button{width:26px;height:26px;border-radius:999px;background:#18181b;color:#fff;font-size:14px;line-height:1;display:grid;place-items:center;cursor:pointer;border:none}
+<style id="tf-fix3-css">
+.tf-inbar-btn{position:fixed;z-index:80;width:32px;height:32px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;display:grid;place-items:center;cursor:pointer;font-size:16px;line-height:1;box-shadow:none;pointer-events:auto}
+.tf-inbar-thumb{position:fixed;z-index:80;width:28px;height:28px;object-fit:cover;border-radius:7px;display:block;pointer-events:none}
+.tf-inbar-x{position:fixed;z-index:81;width:18px;height:18px;border-radius:999px;background:#18181b;color:#fff;font-size:11px;line-height:1;display:grid;place-items:center;cursor:pointer;border:none}
 .tf-photo-overlay{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
 .tf-photo-overlay h4{margin:0 0 6px;font-size:13px;font-weight:900}
 .tf-photo-overlay p.tf-status{margin:0 0 8px;font-size:11px;font-weight:700;color:#15803d}
@@ -5165,14 +5164,13 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
 .tf-photo-card b{display:block;font-size:11px;padding:4px 2px 0}
 .tf-photo-card span{display:block;font-size:10px;color:#71717a;padding:0 2px 6px}
 </style>
-<script id="tf-fix2-js">
+<script id="tf-fix3-js">
 (function(){
 "use strict";
 function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
 function findInput(){return document.querySelector('input[aria-label="Buscar tattoos"]');}
 function findModal(){return document.querySelector('.tattoo-detail-modal');}
 function closeDetail(){var m=findModal(); if(!m) return; var b=m.querySelector('button[aria-label="Cerrar"]'); if(b){b.click();return;} m.click();}
-/* Cerrar detalle deslizando abajo - no toca el buscador */
 var dw=null;
 function wireDetail(m){
   if(!m||dw===m) return; dw=m;
@@ -5184,8 +5182,7 @@ function wireDetail(m){
   d.addEventListener('touchstart',st,{passive:true}); d.addEventListener('touchmove',mv,{passive:true}); d.addEventListener('touchend',en,{passive:true}); d.addEventListener('touchcancel',en,{passive:true});
 }
 new MutationObserver(function(){var m=findModal(); if(m) wireDetail(m);}).observe(document.documentElement,{childList:true,subtree:true});
-/* Busqueda por foto: boton flotante ABAJO, NUNCA toca el input original */
-var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null,chip:null};
+var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';}catch(_){} return u;}
 function parseLine(line){var o=[],cur='',q=false; for(var i=0;i<line.length;i++){var c=line[i]; if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"'; i++;}else q=false;}else cur+=c;}else{if(c==='"') q=true; else if(c===','){o.push(cur); cur='';}else cur+=c;}} o.push(cur); return o;}
@@ -5212,24 +5209,46 @@ function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
 var CM={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
 function colorScore(col,dom){if(!col||!dom) return 0.3; var parts=String(col).toLowerCase().split(/[|,]/),best=0; for(var i=0;i<parts.length;i++){var nm=parts[i].trim().split(' ')[0]; var rgb=CM[nm]; if(!rgb) continue; var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6; var s=1-d; if(s>best) best=s;} return best;}
-/* FAB y chip abajo - fuera del buscador */
-var fab=null, fileInput=null;
-function ensureFab(){
-  if(fab) return;
-  fab=document.createElement('button'); fab.type='button'; fab.className='tf-fab'; fab.textContent='📷'; fab.setAttribute('aria-label','Buscar por foto');
-  fab.addEventListener('click',function(){ if(fileInput) fileInput.click(); });
-  document.body.appendChild(fab);
+/* Boton DENTRO de la barra visualmente, pero FUERA del arbol de React */
+var btn=null, fileInput=null, thumbImg=null, xBtn=null;
+function ensureInBar(){
+  if(btn) return;
+  btn=document.createElement('button'); btn.type='button'; btn.className='tf-inbar-btn'; btn.textContent='📷'; btn.setAttribute('aria-label','Buscar por foto');
+  // No quitar el foco al tocar: asi el teclado no se cierra y vuelve la palomita azul
+  btn.addEventListener('mousedown',function(e){e.preventDefault();});
+  btn.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
+  btn.addEventListener('click',function(e){e.preventDefault(); if(fileInput) fileInput.click();});
+  document.body.appendChild(btn);
   fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
   fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
   document.body.appendChild(fileInput);
 }
-function showChip(){
-  if(S.chip) S.chip.remove(); S.chip=null;
+function positionInBar(){
+  var inp=findInput(); if(!inp||!btn) return;
+  var r=inp.getBoundingClientRect();
+  // Si la barra no se ve (scroll lejos), esconder el boton para que no flote
+  if(r.top<-60||r.top>window.innerHeight+60||r.width<100){ btn.style.display='none'; if(thumbImg) thumbImg.style.display='none'; if(xBtn) xBtn.style.display='none'; return; }
+  btn.style.display='grid';
+  btn.style.left=(r.right-40)+'px'; btn.style.top=(r.top+8)+'px';
+  if(thumbImg){
+    thumbImg.style.display='block';
+    thumbImg.style.left=(r.left+8)+'px'; thumbImg.style.top=(r.top+10)+'px';
+  }
+  if(xBtn){
+    xBtn.style.display='grid';
+    xBtn.style.left=(r.left+30)+'px'; xBtn.style.top=(r.top+6)+'px';
+  }
+}
+function showThumb(){
+  if(thumbImg) thumbImg.remove(); if(xBtn) xBtn.remove(); thumbImg=null; xBtn=null;
   if(!S.url) return;
-  var c=document.createElement('div'); c.className='tf-fab-chip';
-  c.innerHTML='<img alt="Foto buscada" src="'+S.url+'"><button type="button">× Quitar foto</button>';
-  c.querySelector('button').addEventListener('click',function(e){e.preventDefault(); clearPhoto();});
-  document.body.appendChild(c); S.chip=c;
+  thumbImg=document.createElement('img'); thumbImg.className='tf-inbar-thumb'; thumbImg.src=S.url; thumbImg.alt='Foto buscada';
+  document.body.appendChild(thumbImg);
+  xBtn=document.createElement('button'); xBtn.type='button'; xBtn.className='tf-inbar-x'; xBtn.textContent='×';
+  xBtn.addEventListener('mousedown',function(e){e.preventDefault();});
+  xBtn.addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); clearPhoto();});
+  document.body.appendChild(xBtn);
+  positionInBar();
 }
 function ensureOverlay(){
   if(S.overlay) return S.overlay;
@@ -5261,17 +5280,17 @@ function renderOverlay(){
     cont.appendChild(card);
   });
   box.style.display='block';
-  box.scrollIntoView({behavior:'smooth',block:'start'});
+  // NO hacer scrollIntoView aqui: eso cerraba el teclado y quitaba la palomita
 }
 function clearPhoto(){
   S.gen++;
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
   S.url=null; S.hash=null; S.hist=null; S.dom=null; S.scores=null;
-  if(S.chip){S.chip.remove(); S.chip=null;}
+  if(thumbImg){thumbImg.remove(); thumbImg=null;} if(xBtn){xBtn.remove(); xBtn=null;}
   if(S.overlay) S.overlay.style.display='none';
+  positionInBar();
 }
 function openDetailFor(clave){
-  // No tocamos el valor del input con JS invasivo: usamos el truco nativo que React si entiende, solo en este clic
   var inp=findInput(); if(!inp) return;
   try{
     var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
@@ -5286,11 +5305,11 @@ function openDetailFor(clave){
   }, 400);
 }
 function onPick(file){
-  ensureFab();
+  ensureInBar();
   S.gen++; var my=S.gen;
   var url=URL.createObjectURL(file);
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
-  S.url=url; showChip();
+  S.url=url; showThumb();
   setStatus('Analizando tu foto…', true);
   var im=new Image();
   im.onload=function(){
@@ -5307,29 +5326,34 @@ async function rank(my){
   var items=getCatalog(); if(!items.length){ setStatus('No pude leer el catálogo, recarga la página.', false); return; }
   items.forEach(function(it){ it.cScore=colorScore(it.color, S.dom); });
   items.sort(function(a,b){return b.cScore-a.cScore;});
-  var top=items.slice(0,60); var scores={}; items.forEach(function(it){ scores[it.clave]=it.cScore*0.45; });
-  S.scores=scores; renderOverlay(); setStatus('Comparando… 0 / 60', true);
+  var top=items.slice(0,300); var scores={}; items.forEach(function(it){ scores[it.clave]=it.cScore*0.45; });
+  S.scores=scores; renderOverlay(); setStatus('Comparando… 0 / 300', true);
   for(var i=0;i<top.length;i+=2){
     if(my!==S.gen) return;
     var batch=top.slice(i,i+2);
     for(var k=0;k<batch.length;k++){
       if(my!==S.gen) return;
       var it=batch[k]; var th=await loadThumb(it.img); if(my!==S.gen) return;
-      if(th){ var f=feat(th); if(f){ var v=1-(0.55*hashD(S.hash,f.hash)+0.45*histD(S.hist,f.hist)); if(v<0)v=0; if(v>1)v=1; scores[it.clave]=0.55*v+0.45*it.cScore; } }
+      if(th){ var f=feat(th); if(f){ var hd=hashD(S.hash,f.hash); var hsd=histD(S.hist,f.hist); var v=1-(0.55*hd+0.45*hsd); if(v<0)v=0; if(v>1)v=1; if(hd<0.06&&hsd<0.12){ v=1; } scores[it.clave]=0.55*v+0.45*it.cScore; if(v>=0.98){ S.scores=scores; renderOverlay(); setStatus('¡La encontré! Es idéntica a tu foto.', false); } } }
       await sleep(0);
     }
     S.scores=scores; renderOverlay(); setStatus('Comparando… '+Math.min(i+2,top.length)+' / '+top.length, true); await sleep(10);
   }
   if(my!==S.gen) return;
-  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × Quitar foto para volver a todo', false);
+  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × para quitar la foto', false);
 }
-/* Escribir filtra tambien el listado de foto, sin tocar el grid de React */
+/* NO interceptar el input con preventDefault: dejar que React filtre a cada letra como antes */
+var raf=null;
+function loop(){ positionInBar(); raf=requestAnimationFrame(loop); }
+ensureInBar(); loop();
+window.addEventListener('scroll',positionInBar,{passive:true,capture:true});
+window.addEventListener('resize',positionInBar);
 document.addEventListener('input',function(e){
   if(e.target&&e.target.getAttribute&&e.target.getAttribute('aria-label')==='Buscar tattoos'){
     if(S.scores) renderOverlay();
   }
 },true);
-ensureFab();
+document.addEventListener('focusin',function(){ setTimeout(positionInBar,50); },true);
 })();
 </script>
 
