@@ -5149,11 +5149,12 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
-<style id="tf-fix-css">
-.tf-photo-float-btn{position:fixed;z-index:60;width:34px;height:34px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;display:grid;place-items:center;cursor:pointer;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-.tf-photo-float-chip{position:fixed;z-index:60;height:34px;display:flex;align-items:center;gap:4px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:2px 6px 2px 2px}
-.tf-photo-float-chip img{width:30px;height:30px;object-fit:cover;border-radius:7px;display:block}
-.tf-photo-float-chip button{width:20px;height:20px;border-radius:999px;background:#18181b;color:#fff;font-size:12px;line-height:1;display:grid;place-items:center;cursor:pointer}
+
+<style id="tf-fix2-css">
+.tf-fab{position:fixed;right:16px;bottom:20px;z-index:90;width:56px;height:56px;border-radius:999px;background:#18181b;color:#fff;font-size:24px;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;border:none}
+.tf-fab-chip{position:fixed;right:16px;bottom:84px;z-index:90;display:flex;align-items:center;gap:6px;background:#fff;border:2px solid #18181b;border-radius:14px;padding:4px 6px 4px 4px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.tf-fab-chip img{width:44px;height:44px;object-fit:cover;border-radius:9px;display:block}
+.tf-fab-chip button{width:26px;height:26px;border-radius:999px;background:#18181b;color:#fff;font-size:14px;line-height:1;display:grid;place-items:center;cursor:pointer;border:none}
 .tf-photo-overlay{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
 .tf-photo-overlay h4{margin:0 0 6px;font-size:13px;font-weight:900}
 .tf-photo-overlay p.tf-status{margin:0 0 8px;font-size:11px;font-weight:700;color:#15803d}
@@ -5163,16 +5164,15 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
 .tf-photo-card img{width:100%;height:110px;object-fit:contain;display:block;background:#fff}
 .tf-photo-card b{display:block;font-size:11px;padding:4px 2px 0}
 .tf-photo-card span{display:block;font-size:10px;color:#71717a;padding:0 2px 6px}
-body.tf-photo-active .tattoo-grid, body.tf-photo-active .tattoo-mosaic{display:none !important}
 </style>
-<script id="tf-fix-js">
+<script id="tf-fix2-js">
 (function(){
 "use strict";
 function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
 function findInput(){return document.querySelector('input[aria-label="Buscar tattoos"]');}
 function findModal(){return document.querySelector('.tattoo-detail-modal');}
 function closeDetail(){var m=findModal(); if(!m) return; var b=m.querySelector('button[aria-label="Cerrar"]'); if(b){b.click();return;} m.click();}
-/* --- Cerrar detalle deslizando abajo, sin barra ni mensaje --- */
+/* Cerrar detalle deslizando abajo - no toca el buscador */
 var dw=null;
 function wireDetail(m){
   if(!m||dw===m) return; dw=m;
@@ -5184,8 +5184,8 @@ function wireDetail(m){
   d.addEventListener('touchstart',st,{passive:true}); d.addEventListener('touchmove',mv,{passive:true}); d.addEventListener('touchend',en,{passive:true}); d.addEventListener('touchcancel',en,{passive:true});
 }
 new MutationObserver(function(){var m=findModal(); if(m) wireDetail(m);}).observe(document.documentElement,{childList:true,subtree:true});
-/* --- Búsqueda por foto: NO toca el DOM de React, usa su propio listado --- */
-var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null};
+/* Busqueda por foto: boton flotante ABAJO, NUNCA toca el input original */
+var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null,chip:null};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';}catch(_){} return u;}
 function parseLine(line){var o=[],cur='',q=false; for(var i=0;i<line.length;i++){var c=line[i]; if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"'; i++;}else q=false;}else cur+=c;}else{if(c==='"') q=true; else if(c===','){o.push(cur); cur='';}else cur+=c;}} o.push(cur); return o;}
@@ -5194,7 +5194,7 @@ function getCatalog(){
   var scripts=document.querySelectorAll('script'); var raw=null;
   for(var i=0;i<scripts.length;i++){var t=scripts[i].textContent||''; var s=t.indexOf('var Gs=`'); if(s!==-1){var e=t.indexOf('`;',s); if(e!==-1){raw=t.substring(s+8,e); break;}}}
   if(!raw) return [];
-  var lines=raw.split('\\r\n'); if(lines.length<10) lines=raw.split('\n');
+  var lines=raw.split('\r\n'); if(lines.length<10) lines=raw.split('\n');
   var items=[];
   for(var j=1;j<lines.length;j++){var line=lines[j]; if(!line||line.length<3) continue; var f=parseLine(line); if(!f[0]) continue; items.push({clave:String(f[0]).trim(),img:f[1]||'',color:f[7]||'',cat:f[3]||'',ancho:f[4]||'',alto:f[5]||'',keys:f[6]||'',size:f[8]||''});}
   S.items=items; return items;
@@ -5212,44 +5212,30 @@ function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
 var CM={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
 function colorScore(col,dom){if(!col||!dom) return 0.3; var parts=String(col).toLowerCase().split(/[|,]/),best=0; for(var i=0;i<parts.length;i++){var nm=parts[i].trim().split(' ')[0]; var rgb=CM[nm]; if(!rgb) continue; var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6; var s=1-d; if(s>best) best=s;} return best;}
-/* Botón y fotito FUERA del árbol de React: no los borra al re-renderizar */
-var floatBtn=null, floatChip=null, fileInput=null;
-function positionFloats(){
-  var inp=findInput(); if(!inp) return;
-  var r=inp.getBoundingClientRect();
-  if(floatBtn){ floatBtn.style.left=(r.right-42)+'px'; floatBtn.style.top=(r.top+7)+'px'; }
-  if(floatChip){ floatChip.style.left=(r.left+42)+'px'; floatChip.style.top=(r.top+7)+'px'; inp.style.paddingLeft = S.url ? '118px' : ''; }
-}
-function ensureFloats(){
-  if(!findInput()) return false;
-  if(!floatBtn){
-    floatBtn=document.createElement('button'); floatBtn.type='button'; floatBtn.className='tf-photo-float-btn'; floatBtn.textContent='📷'; floatBtn.title='Buscar por foto'; floatBtn.setAttribute('aria-label','Buscar por foto');
-    floatBtn.addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); if(fileInput) fileInput.click();});
-    document.body.appendChild(floatBtn);
-    fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
-    fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
-    document.body.appendChild(fileInput);
-    window.addEventListener('scroll',positionFloats,true); window.addEventListener('resize',positionFloats);
-  }
-  positionFloats(); return true;
+/* FAB y chip abajo - fuera del buscador */
+var fab=null, fileInput=null;
+function ensureFab(){
+  if(fab) return;
+  fab=document.createElement('button'); fab.type='button'; fab.className='tf-fab'; fab.textContent='📷'; fab.setAttribute('aria-label','Buscar por foto');
+  fab.addEventListener('click',function(){ if(fileInput) fileInput.click(); });
+  document.body.appendChild(fab);
+  fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
+  fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
+  document.body.appendChild(fileInput);
 }
 function showChip(){
-  var inp=findInput(); if(!inp) return;
-  if(floatChip) floatChip.remove(); floatChip=null;
-  if(!S.url){ inp.style.paddingLeft=''; return; }
-  floatChip=document.createElement('span'); floatChip.className='tf-photo-float-chip';
-  floatChip.innerHTML='<img alt="Foto buscada" src="'+S.url+'"><button type="button">×</button>';
-  floatChip.querySelector('button').addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); clearPhoto();});
-  document.body.appendChild(floatChip);
-  positionFloats();
+  if(S.chip) S.chip.remove(); S.chip=null;
+  if(!S.url) return;
+  var c=document.createElement('div'); c.className='tf-fab-chip';
+  c.innerHTML='<img alt="Foto buscada" src="'+S.url+'"><button type="button">× Quitar foto</button>';
+  c.querySelector('button').addEventListener('click',function(e){e.preventDefault(); clearPhoto();});
+  document.body.appendChild(c); S.chip=c;
 }
 function ensureOverlay(){
   if(S.overlay) return S.overlay;
-  var main=document.querySelector('main'); if(!main) return null;
   var box=document.createElement('div'); box.className='tf-photo-overlay'; box.style.display='none';
   box.innerHTML='<h4>Las más parecidas a tu foto</h4><p class="tf-status"></p><div class="tf-photo-results"></div>';
   S.overlay=box; S.statusEl=box.querySelector('.tf-status');
-  // Insertar ANTES del main, fuera de #root, para que React no lo borre
   var root=document.getElementById('root');
   if(root&&root.parentNode) root.parentNode.insertBefore(box, root.nextSibling);
   else document.body.insertBefore(box, document.body.firstChild);
@@ -5275,25 +5261,23 @@ function renderOverlay(){
     cont.appendChild(card);
   });
   box.style.display='block';
-  document.body.classList.add('tf-photo-active');
+  box.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function clearPhoto(){
   S.gen++;
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
   S.url=null; S.hash=null; S.hist=null; S.dom=null; S.scores=null;
-  if(floatChip){floatChip.remove(); floatChip=null;}
-  var inp=findInput(); if(inp) inp.style.paddingLeft='';
+  if(S.chip){S.chip.remove(); S.chip=null;}
   if(S.overlay) S.overlay.style.display='none';
-  document.body.classList.remove('tf-photo-active');
-  positionFloats();
 }
 function openDetailFor(clave){
+  // No tocamos el valor del input con JS invasivo: usamos el truco nativo que React si entiende, solo en este clic
   var inp=findInput(); if(!inp) return;
-  // Hacer que React filtre a esa clave y luego tocar su tarjeta
-  var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
-  setter.call(inp, clave);
-  inp.dispatchEvent(new Event('input',{bubbles:true}));
-  inp.dispatchEvent(new Event('change',{bubbles:true}));
+  try{
+    var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+    setter.call(inp, clave);
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+  }catch(_){}
   setTimeout(function(){
     var cards=$all('.tattoo-card');
     for(var i=0;i<cards.length;i++){
@@ -5302,13 +5286,12 @@ function openDetailFor(clave){
   }, 400);
 }
 function onPick(file){
-  ensureFloats();
+  ensureFab();
   S.gen++; var my=S.gen;
   var url=URL.createObjectURL(file);
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
   S.url=url; showChip();
   setStatus('Analizando tu foto…', true);
-  // Quitar foco del buscador para que React no lo borre mientras buscamos
   var im=new Image();
   im.onload=function(){
     if(my!==S.gen) return;
@@ -5331,31 +5314,22 @@ async function rank(my){
     var batch=top.slice(i,i+2);
     for(var k=0;k<batch.length;k++){
       if(my!==S.gen) return;
-      var it=batch[k]; var th=await loadThumb(it.img,4000); if(my!==S.gen) return;
+      var it=batch[k]; var th=await loadThumb(it.img); if(my!==S.gen) return;
       if(th){ var f=feat(th); if(f){ var v=1-(0.55*hashD(S.hash,f.hash)+0.45*histD(S.hist,f.hist)); if(v<0)v=0; if(v>1)v=1; scores[it.clave]=0.55*v+0.45*it.cScore; } }
       await sleep(0);
     }
     S.scores=scores; renderOverlay(); setStatus('Comparando… '+Math.min(i+2,top.length)+' / '+top.length, true); await sleep(10);
   }
   if(my!==S.gen) return;
-  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · Backspace al inicio quita la foto', false);
+  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × Quitar foto para volver a todo', false);
 }
-/* Backspace al inicio quita la foto, sin romper el buscador */
-document.addEventListener('keydown',function(e){
-  if(e.key!=='Backspace'||!S.url) return;
-  var inp=findInput(); if(!inp||document.activeElement!==inp) return;
-  var pos=(typeof inp.selectionStart==='number')?inp.selectionStart:0;
-  var end=(typeof inp.selectionEnd==='number')?inp.selectionEnd:0;
-  if(pos===0&&end===0){ e.preventDefault(); clearPhoto(); }
-},true);
-/* Escribir filtra también el listado de foto, sin tocar el grid de React */
+/* Escribir filtra tambien el listado de foto, sin tocar el grid de React */
 document.addEventListener('input',function(e){
   if(e.target&&e.target.getAttribute&&e.target.getAttribute('aria-label')==='Buscar tattoos'){
-    positionFloats();
     if(S.scores) renderOverlay();
   }
 },true);
-var t=0; var boot=setInterval(function(){ t++; if(ensureFloats()||t>100) clearInterval(boot); },300);
+ensureFab();
 })();
 </script>
 
