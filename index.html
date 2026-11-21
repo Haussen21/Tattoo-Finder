@@ -5150,39 +5150,39 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
 
-<style id="tf-fix3-css">
-.tf-inbar-btn{position:fixed;z-index:80;width:32px;height:32px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;display:grid;place-items:center;cursor:pointer;font-size:16px;line-height:1;box-shadow:none;pointer-events:auto}
-.tf-inbar-thumb{position:fixed;z-index:80;width:28px;height:28px;object-fit:cover;border-radius:7px;display:block;pointer-events:none}
-.tf-inbar-x{position:fixed;z-index:81;width:18px;height:18px;border-radius:999px;background:#18181b;color:#fff;font-size:11px;line-height:1;display:grid;place-items:center;cursor:pointer;border:none}
-.tf-photo-overlay{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
-.tf-photo-overlay h4{margin:0 0 6px;font-size:13px;font-weight:900}
-.tf-photo-overlay p.tf-status{margin:0 0 8px;font-size:11px;font-weight:700;color:#15803d}
-.tf-photo-overlay p.tf-status.tf-busy{color:#92400e}
-.tf-photo-results{display:flex;flex-wrap:wrap;gap:8px}
+<style id="tf-min-css">
+.tf-photo-bar{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
+.tf-photo-bar button.tf-pick{width:100%;height:44px;border-radius:10px;background:#18181b;color:#fff;font-size:14px;font-weight:800;border:none}
+.tf-photo-bar .tf-thumb{margin-top:8px;display:flex;align-items:center;gap:8px}
+.tf-photo-bar .tf-thumb img{width:44px;height:44px;object-fit:cover;border-radius:8px}
+.tf-photo-bar .tf-thumb button{height:32px;padding:0 10px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;font-size:12px;font-weight:700}
+.tf-photo-bar p.tf-status{margin:8px 0 0;font-size:12px;font-weight:700;color:#15803d}
+.tf-photo-bar p.tf-status.tf-busy{color:#92400e}
+.tf-photo-results{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .tf-photo-card{width:calc(33.333% - 6px);border:1px solid #e4e4e7;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;text-align:center}
 .tf-photo-card img{width:100%;height:110px;object-fit:contain;display:block;background:#fff}
 .tf-photo-card b{display:block;font-size:11px;padding:4px 2px 0}
 .tf-photo-card span{display:block;font-size:10px;color:#71717a;padding:0 2px 6px}
 </style>
-<script id="tf-fix3-js">
+<script id="tf-min-js">
 (function(){
 "use strict";
 function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
-function findInput(){return document.querySelector('input[aria-label="Buscar tattoos"]');}
 function findModal(){return document.querySelector('.tattoo-detail-modal');}
 function closeDetail(){var m=findModal(); if(!m) return; var b=m.querySelector('button[aria-label="Cerrar"]'); if(b){b.click();return;} m.click();}
-var dw=null;
-function wireDetail(m){
-  if(!m||dw===m) return; dw=m;
+/* Solo cerrar detalle deslizando abajo - no toca buscador */
+var wired=null;
+setInterval(function(){
+  var m=findModal(); if(!m||wired===m) return; wired=m;
   var d=m.querySelector('.tattoo-detail'); if(!d) return;
   var sy=0,sx=0,cy=0,act=false; var info=m.querySelector('.tattoo-detail-info');
-  function st(e){ if(!e.touches||e.touches.length!==1) return; if(info&&e.target.closest&&e.target.closest('.tattoo-detail-info')&&info.scrollTop>0) return; var t=e.touches[0]; sy=t.clientY; sx=t.clientX; cy=0; act=true; }
-  function mv(e){ if(!act||!e.touches||e.touches.length!==1) return; var t=e.touches[0]; var dy=t.clientY-sy, dx=t.clientX-sx; if(dy<0) dy=0; if(Math.abs(dx)>70&&Math.abs(dx)>dy*1.4){act=false; d.style.transform=''; d.style.opacity=''; return;} if(dy>8){cy=dy; d.style.transform='translateY('+dy+'px)'; d.style.opacity=String(Math.max(0.35,1-dy/420));} }
-  function en(){ if(!act) return; act=false; if(cy>110){d.style.transform=''; d.style.opacity=''; closeDetail();} else {d.style.transform=''; d.style.opacity='';} cy=0; }
-  d.addEventListener('touchstart',st,{passive:true}); d.addEventListener('touchmove',mv,{passive:true}); d.addEventListener('touchend',en,{passive:true}); d.addEventListener('touchcancel',en,{passive:true});
-}
-new MutationObserver(function(){var m=findModal(); if(m) wireDetail(m);}).observe(document.documentElement,{childList:true,subtree:true});
-var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null};
+  d.addEventListener('touchstart',function(e){ if(!e.touches||e.touches.length!==1) return; if(info&&e.target.closest&&e.target.closest('.tattoo-detail-info')&&info.scrollTop>0) return; var t=e.touches[0]; sy=t.clientY; sx=t.clientX; cy=0; act=true; },{passive:true});
+  d.addEventListener('touchmove',function(e){ if(!act||!e.touches||e.touches.length!==1) return; var t=e.touches[0]; var dy=t.clientY-sy, dx=t.clientX-sx; if(dy<0) dy=0; if(Math.abs(dx)>70&&Math.abs(dx)>dy*1.4){act=false; d.style.transform=''; d.style.opacity=''; return;} if(dy>8){cy=dy; d.style.transform='translateY('+dy+'px)'; d.style.opacity=String(Math.max(0.35,1-dy/420));} },{passive:true});
+  function end(){ if(!act) return; act=false; if(cy>110){d.style.transform=''; d.style.opacity=''; closeDetail();} else {d.style.transform=''; d.style.opacity='';} cy=0; }
+  d.addEventListener('touchend',end,{passive:true}); d.addEventListener('touchcancel',end,{passive:true});
+},500);
+/* Busqueda por foto en su PROPIA barra abajo, NO dentro del buscador original */
+var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
 function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';}catch(_){} return u;}
 function parseLine(line){var o=[],cur='',q=false; for(var i=0;i<line.length;i++){var c=line[i]; if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"'; i++;}else q=false;}else cur+=c;}else{if(c==='"') q=true; else if(c===','){o.push(cur); cur='';}else cur+=c;}} o.push(cur); return o;}
@@ -5209,61 +5209,24 @@ function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
 var CM={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
 function colorScore(col,dom){if(!col||!dom) return 0.3; var parts=String(col).toLowerCase().split(/[|,]/),best=0; for(var i=0;i<parts.length;i++){var nm=parts[i].trim().split(' ')[0]; var rgb=CM[nm]; if(!rgb) continue; var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6; var s=1-d; if(s>best) best=s;} return best;}
-/* Boton DENTRO de la barra visualmente, pero FUERA del arbol de React */
-var btn=null, fileInput=null, thumbImg=null, xBtn=null;
-function ensureInBar(){
-  if(btn) return;
-  btn=document.createElement('button'); btn.type='button'; btn.className='tf-inbar-btn'; btn.textContent='📷'; btn.setAttribute('aria-label','Buscar por foto');
-  // No quitar el foco al tocar: asi el teclado no se cierra y vuelve la palomita azul
-  btn.addEventListener('mousedown',function(e){e.preventDefault();});
-  btn.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
-  btn.addEventListener('click',function(e){e.preventDefault(); if(fileInput) fileInput.click();});
-  document.body.appendChild(btn);
+var bar=null, statusEl=null, resultsEl=null, thumbBox=null, fileInput=null;
+function buildBar(){
+  if(bar) return;
+  bar=document.createElement('div'); bar.className='tf-photo-bar';
+  bar.innerHTML='<button type="button" class="tf-pick">📷 Buscar por foto</button><div class="tf-thumb" style="display:none"></div><p class="tf-status"></p><div class="tf-photo-results"></div>';
+  var root=document.getElementById('root');
+  if(root&&root.parentNode) root.parentNode.insertBefore(bar, root.nextSibling);
+  else document.body.insertBefore(bar, document.body.firstChild);
+  statusEl=bar.querySelector('.tf-status'); resultsEl=bar.querySelector('.tf-photo-results'); thumbBox=bar.querySelector('.tf-thumb');
   fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
   fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
   document.body.appendChild(fileInput);
+  bar.querySelector('.tf-pick').addEventListener('click',function(){ fileInput.click(); });
 }
-function positionInBar(){
-  var inp=findInput(); if(!inp||!btn) return;
-  var r=inp.getBoundingClientRect();
-  // Si la barra no se ve (scroll lejos), esconder el boton para que no flote
-  if(r.top<-60||r.top>window.innerHeight+60||r.width<100){ btn.style.display='none'; if(thumbImg) thumbImg.style.display='none'; if(xBtn) xBtn.style.display='none'; return; }
-  btn.style.display='grid';
-  btn.style.left=(r.right-40)+'px'; btn.style.top=(r.top+8)+'px';
-  if(thumbImg){
-    thumbImg.style.display='block';
-    thumbImg.style.left=(r.left+8)+'px'; thumbImg.style.top=(r.top+10)+'px';
-  }
-  if(xBtn){
-    xBtn.style.display='grid';
-    xBtn.style.left=(r.left+30)+'px'; xBtn.style.top=(r.top+6)+'px';
-  }
-}
-function showThumb(){
-  if(thumbImg) thumbImg.remove(); if(xBtn) xBtn.remove(); thumbImg=null; xBtn=null;
-  if(!S.url) return;
-  thumbImg=document.createElement('img'); thumbImg.className='tf-inbar-thumb'; thumbImg.src=S.url; thumbImg.alt='Foto buscada';
-  document.body.appendChild(thumbImg);
-  xBtn=document.createElement('button'); xBtn.type='button'; xBtn.className='tf-inbar-x'; xBtn.textContent='×';
-  xBtn.addEventListener('mousedown',function(e){e.preventDefault();});
-  xBtn.addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); clearPhoto();});
-  document.body.appendChild(xBtn);
-  positionInBar();
-}
-function ensureOverlay(){
-  if(S.overlay) return S.overlay;
-  var box=document.createElement('div'); box.className='tf-photo-overlay'; box.style.display='none';
-  box.innerHTML='<h4>Las más parecidas a tu foto</h4><p class="tf-status"></p><div class="tf-photo-results"></div>';
-  S.overlay=box; S.statusEl=box.querySelector('.tf-status');
-  var root=document.getElementById('root');
-  if(root&&root.parentNode) root.parentNode.insertBefore(box, root.nextSibling);
-  else document.body.insertBefore(box, document.body.firstChild);
-  return box;
-}
-function setStatus(t,busy){ ensureOverlay(); if(S.statusEl){ S.statusEl.textContent=t||''; S.statusEl.classList.toggle('tf-busy',!!busy); } }
+function setStatus(t,busy){ if(statusEl){ statusEl.textContent=t||''; statusEl.classList.toggle('tf-busy',!!busy); } }
 function renderOverlay(){
-  var box=ensureOverlay(); if(!box) return;
-  var inp=findInput(); var q=(inp?inp.value:'').trim().toLowerCase();
+  if(!bar) return;
+  var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); var q=(inp?inp.value:'').trim().toLowerCase();
   var list=(S.items||[]).slice().sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
   if(q){
     list=list.filter(function(it){
@@ -5271,27 +5234,24 @@ function renderOverlay(){
       return q.split(/\s+/).every(function(w){ return hay.indexOf(w)!==-1; });
     });
   }
-  var show=list.slice(0,60);
-  var cont=box.querySelector('.tf-photo-results'); cont.innerHTML='';
+  var show=list.slice(0,60); resultsEl.innerHTML='';
   show.forEach(function(it){
     var card=document.createElement('div'); card.className='tf-photo-card';
     card.innerHTML='<img src="'+thumbUrl(it.img)+'" alt="'+it.clave+'"><b>'+it.clave+'</b><span>'+(it.ancho||'')+' × '+(it.alto||'')+' cm · '+it.cat+'</span>';
     card.addEventListener('click',function(){ openDetailFor(it.clave); });
-    cont.appendChild(card);
+    resultsEl.appendChild(card);
   });
-  box.style.display='block';
-  // NO hacer scrollIntoView aqui: eso cerraba el teclado y quitaba la palomita
 }
 function clearPhoto(){
   S.gen++;
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
   S.url=null; S.hash=null; S.hist=null; S.dom=null; S.scores=null;
-  if(thumbImg){thumbImg.remove(); thumbImg=null;} if(xBtn){xBtn.remove(); xBtn=null;}
-  if(S.overlay) S.overlay.style.display='none';
-  positionInBar();
+  if(thumbBox){thumbBox.style.display='none'; thumbBox.innerHTML='';}
+  if(resultsEl) resultsEl.innerHTML='';
+  setStatus('', false);
 }
 function openDetailFor(clave){
-  var inp=findInput(); if(!inp) return;
+  var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); if(!inp) return;
   try{
     var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
     setter.call(inp, clave);
@@ -5305,11 +5265,13 @@ function openDetailFor(clave){
   }, 400);
 }
 function onPick(file){
-  ensureInBar();
+  buildBar();
   S.gen++; var my=S.gen;
   var url=URL.createObjectURL(file);
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
-  S.url=url; showThumb();
+  S.url=url;
+  thumbBox.style.display='flex'; thumbBox.innerHTML='<img src="'+url+'" alt="Foto buscada"><span>Foto lista</span><button type="button">× Quitar foto</button>';
+  thumbBox.querySelector('button').addEventListener('click',function(){ clearPhoto(); });
   setStatus('Analizando tu foto…', true);
   var im=new Image();
   im.onload=function(){
@@ -5340,20 +5302,9 @@ async function rank(my){
     S.scores=scores; renderOverlay(); setStatus('Comparando… '+Math.min(i+2,top.length)+' / '+top.length, true); await sleep(10);
   }
   if(my!==S.gen) return;
-  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × para quitar la foto', false);
+  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × Quitar foto para volver a todo', false);
 }
-/* NO interceptar el input con preventDefault: dejar que React filtre a cada letra como antes */
-var raf=null;
-function loop(){ positionInBar(); raf=requestAnimationFrame(loop); }
-ensureInBar(); loop();
-window.addEventListener('scroll',positionInBar,{passive:true,capture:true});
-window.addEventListener('resize',positionInBar);
-document.addEventListener('input',function(e){
-  if(e.target&&e.target.getAttribute&&e.target.getAttribute('aria-label')==='Buscar tattoos'){
-    if(S.scores) renderOverlay();
-  }
-},true);
-document.addEventListener('focusin',function(){ setTimeout(positionInBar,50); },true);
+buildBar();
 })();
 </script>
 
