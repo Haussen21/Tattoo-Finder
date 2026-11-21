@@ -5150,27 +5150,26 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
 
-<style id="tf-min-css">
-.tf-photo-bar{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
-.tf-photo-bar button.tf-pick{width:100%;height:44px;border-radius:10px;background:#18181b;color:#fff;font-size:14px;font-weight:800;border:none}
-.tf-photo-bar .tf-thumb{margin-top:8px;display:flex;align-items:center;gap:8px}
-.tf-photo-bar .tf-thumb img{width:44px;height:44px;object-fit:cover;border-radius:8px}
-.tf-photo-bar .tf-thumb button{height:32px;padding:0 10px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;font-size:12px;font-weight:700}
-.tf-photo-bar p.tf-status{margin:8px 0 0;font-size:12px;font-weight:700;color:#15803d}
-.tf-photo-bar p.tf-status.tf-busy{color:#92400e}
-.tf-photo-results{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.tf-photo-card{width:calc(33.333% - 6px);border:1px solid #e4e4e7;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;text-align:center}
-.tf-photo-card img{width:100%;height:110px;object-fit:contain;display:block;background:#fff}
-.tf-photo-card b{display:block;font-size:11px;padding:4px 2px 0}
-.tf-photo-card span{display:block;font-size:10px;color:#71717a;padding:0 2px 6px}
+<style id="tf-top-css">
+.tf-top-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;height:28px;margin:0 12px 2px;padding:0;background:transparent}
+.tf-top-thumb{width:28px;height:28px;object-fit:cover;border-radius:6px;display:none}
+.tf-top-status{font-size:11px;font-weight:700;color:#92400e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tf-top-status.done{color:#15803d}
+.tf-top-cam{width:28px;height:28px;border-radius:999px;background:#fff;border:1px solid #e4e4e7;font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+.tf-top-x{width:20px;height:20px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;font-size:11px;line-height:1;display:none;place-items:center;cursor:pointer}
+body.tf-photo-done #root .tattoo-grid:not(.tf-photo-grid), body.tf-photo-done #root .tattoo-mosaic{display:none !important}
+body.tf-photo-done #root .text-center.mt-4{display:none !important}
+body.tf-photo-done #root .mt-6.text-center{display:none !important}
+body.tf-photo-done .tf-photo-grid{display:grid !important}
+.tf-photo-results-wrap{margin:0}
+.tf-photo-results-wrap .tattoo-grid{margin-top:0}
 </style>
-<script id="tf-min-js">
+<script id="tf-top-js">
 (function(){
 "use strict";
 function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
 function findModal(){return document.querySelector('.tattoo-detail-modal');}
 function closeDetail(){var m=findModal(); if(!m) return; var b=m.querySelector('button[aria-label="Cerrar"]'); if(b){b.click();return;} m.click();}
-/* Solo cerrar detalle deslizando abajo - no toca buscador */
 var wired=null;
 setInterval(function(){
   var m=findModal(); if(!m||wired===m) return; wired=m;
@@ -5181,10 +5180,10 @@ setInterval(function(){
   function end(){ if(!act) return; act=false; if(cy>110){d.style.transform=''; d.style.opacity=''; closeDetail();} else {d.style.transform=''; d.style.opacity='';} cy=0; }
   d.addEventListener('touchend',end,{passive:true}); d.addEventListener('touchcancel',end,{passive:true});
 },500);
-/* Busqueda por foto en su PROPIA barra abajo, NO dentro del buscador original */
-var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0};
+var S={url:null,hash:null,hist:null,aspect:0,scores:null,scored:null,items:[],gen:0};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
-function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';}catch(_){} return u;}
+function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w400';}catch(_){} return u;}
+function proxyUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://images.weserv.nl/?url=drive.google.com/thumbnail%3Fid%3D'+m[1]+'%26sz%3Dw200&w=200&h=200&fit=cover&output=jpg';}catch(_){} return u;}
 function parseLine(line){var o=[],cur='',q=false; for(var i=0;i<line.length;i++){var c=line[i]; if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"'; i++;}else q=false;}else cur+=c;}else{if(c==='"') q=true; else if(c===','){o.push(cur); cur='';}else cur+=c;}} o.push(cur); return o;}
 function getCatalog(){
   if(S.items.length) return S.items;
@@ -5193,118 +5192,230 @@ function getCatalog(){
   if(!raw) return [];
   var lines=raw.split('\r\n'); if(lines.length<10) lines=raw.split('\n');
   var items=[];
-  for(var j=1;j<lines.length;j++){var line=lines[j]; if(!line||line.length<3) continue; var f=parseLine(line); if(!f[0]) continue; items.push({clave:String(f[0]).trim(),img:f[1]||'',color:f[7]||'',cat:f[3]||'',ancho:f[4]||'',alto:f[5]||'',keys:f[6]||'',size:f[8]||''});}
+  for(var j=1;j<lines.length;j++){var line=lines[j]; if(!line||line.length<3) continue; var f=parseLine(line); if(!f[0]) continue; items.push({clave:String(f[0]).trim(),img:f[1]||'',color:f[7]||'',cat:f[3]||'',ancho:parseFloat(f[4])||0,alto:parseFloat(f[5])||0,keys:f[6]||'',size:f[8]||'',categoria:f[3]||''});}
   S.items=items; return items;
 }
 function feat(img){
   try{
-    var c=document.createElement('canvas'); c.width=32; c.height=32; var ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0,32,32); var d=ctx.getImageData(0,0,32,32).data;
-    var gray=[],hist=new Array(64).fill(0),rs=0,gs=0,bs=0,n=0;
-    for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<10) continue; gray.push(0.299*r+0.587*g+0.114*b); rs+=r; gs+=g; bs+=b; n++; var ri=Math.min(3,Math.floor(r/64)),gi=Math.min(3,Math.floor(g/64)),bi=Math.min(3,Math.floor(b/64)); hist[ri*16+gi*4+bi]++;}
-    if(!n) return null; var avg=gray.reduce(function(x,y){return x+y;},0)/gray.length; var bits=gray.map(function(v){return v>=avg?1:0;}); var tot=hist.reduce(function(x,y){return x+y;},0)||1; hist=hist.map(function(v){return v/tot;}); return {hash:bits,hist:hist,dom:[rs/n,gs/n,bs/n]};
+    var c=document.createElement('canvas'); c.width=128; c.height=128; var ctx=c.getContext('2d',{willReadFrequently:true});
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,128,128); ctx.drawImage(img,0,0,128,128);
+    var d=ctx.getImageData(0,0,128,128).data;
+    var gray=new Array(128*128); var sum=0;
+    for(var i=0;i<128*128;i++){ var v=0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2]; gray[i]=v; sum+=v; }
+    var mean=sum/(128*128);
+    var ink=new Array(128*128); var minX=128,minY=128,maxX=-1,maxY=-1,inkN=0; var sumR=0,sumG=0,sumB=0;
+    for(var y=0;y<128;y++) for(var x=0;x<128;x++){ var idx=y*128+x; var isInk=gray[idx] < mean*0.88; ink[idx]=isInk?1:0; if(isInk){ inkN++; sumR+=d[idx*4]; sumG+=d[idx*4+1]; sumB+=d[idx*4+2]; if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } }
+    var inkColor=inkN?{r:sumR/inkN,g:sumG/inkN,b:sumB/inkN}:{r:0,g:0,b:0};
+    var inkRatio=inkN/(128*128);
+    if(inkN<200) return null;
+    var bw=Math.max(1,maxX-minX+1), bh=Math.max(1,maxY-minY+1);
+    var aspect=bw/bh;
+    var tmp=document.createElement('canvas'); tmp.width=128; tmp.height=128; var tctx=tmp.getContext('2d'); var id=tctx.createImageData(128,128);
+    for(var k=0;k<128*128;k++){ var v2=ink[k]?0:255; id.data[k*4]=v2; id.data[k*4+1]=v2; id.data[k*4+2]=v2; id.data[k*4+3]=255; } tctx.putImageData(id,0,0);
+    var c2=document.createElement('canvas'); c2.width=64; c2.height=64; var ctx2=c2.getContext('2d',{willReadFrequently:true});
+    ctx2.fillStyle='#fff'; ctx2.fillRect(0,0,64,64); ctx2.drawImage(tmp, minX, minY, bw, bh, 0, 0, 64, 64);
+    var d2=ctx2.getImageData(0,0,64,64).data; var bits=[];
+    for(var j=0;j<64*64;j++){ bits.push(d2[j*4] < 128 ? 1 : 0); }
+    var hist=new Array(16).fill(0); for(var h=0;h<gray.length;h++){ hist[Math.min(15,Math.floor(gray[h]/16))]++; } var tot=hist.reduce(function(a,b){return a+b;},0)||1; hist=hist.map(function(v){return v/tot;});
+    return {hash:bits,hist:hist,aspect:aspect,inkColor:inkColor,inkRatio:inkRatio};
   }catch(_){return null;}
 }
-function loadThumb(u){return new Promise(function(res){var im=new Image(); im.crossOrigin='anonymous'; var done=false; var to=setTimeout(function(){if(!done){done=true; res(null);}},4000); im.onload=function(){if(!done){done=true; clearTimeout(to); res(im);}}; im.onerror=function(){if(!done){done=true; clearTimeout(to); res(null);}}; im.src=thumbUrl(u);});}
+function loadThumb(u){return new Promise(function(res){var im=new Image(); im.crossOrigin='anonymous'; var done=false; var to=setTimeout(function(){if(!done){done=true; res(null);}},5000); im.onload=function(){if(!done){done=true; clearTimeout(to); res(im);}}; im.onerror=function(){if(!done){done=true; clearTimeout(to); res(null);}}; im.src=proxyUrl(u);});}
 function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d;} return Math.sqrt(s);}
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
-var CM={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
-function colorScore(col,dom){if(!col||!dom) return 0.3; var parts=String(col).toLowerCase().split(/[|,]/),best=0; for(var i=0;i<parts.length;i++){var nm=parts[i].trim().split(' ')[0]; var rgb=CM[nm]; if(!rgb) continue; var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6; var s=1-d; if(s>best) best=s;} return best;}
-var bar=null, statusEl=null, resultsEl=null, thumbBox=null, fileInput=null;
-function buildBar(){
-  if(bar) return;
-  bar=document.createElement('div'); bar.className='tf-photo-bar';
-  bar.innerHTML='<button type="button" class="tf-pick">📷 Buscar por foto</button><div class="tf-thumb" style="display:none"></div><p class="tf-status"></p><div class="tf-photo-results"></div>';
-  var root=document.getElementById('root');
-  if(root&&root.parentNode) root.parentNode.insertBefore(bar, root.nextSibling);
-  else document.body.insertBefore(bar, document.body.firstChild);
-  statusEl=bar.querySelector('.tf-status'); resultsEl=bar.querySelector('.tf-photo-results'); thumbBox=bar.querySelector('.tf-thumb');
+var topRow=null, thumbImg=null, statusEl=null, xBtn=null, resultsWrap=null, resultsGrid=null, fileInput=null;
+function buildTop(){
+  if(topRow) return;
+  var inp=document.querySelector('input[aria-label="Buscar tattoos"]');
+  var wrap=null;
+  if(inp){ wrap=inp.parentElement; }
+  topRow=document.createElement('div'); topRow.className='tf-top-row';
+  topRow.innerHTML='<img class="tf-top-thumb" alt="Foto buscada"><span class="tf-top-status"></span><button type="button" class="tf-top-x">×</button><button type="button" class="tf-top-cam" title="Buscar por foto">📷</button>';
+  if(wrap && wrap.parentNode) wrap.parentNode.insertBefore(topRow, wrap);
+  else {
+    var root=document.getElementById('root');
+    if(root&&root.parentNode) root.parentNode.insertBefore(topRow, root);
+    else document.body.insertBefore(topRow, document.body.firstChild);
+  }
+  resultsWrap=document.createElement('div'); resultsWrap.className='tf-photo-results-wrap'; resultsWrap.style.display='none';
+  resultsGrid=document.createElement('div'); resultsGrid.className='tattoo-grid tf-photo-grid';
+  resultsWrap.appendChild(resultsGrid);
+  var grid=document.querySelector('#root .tattoo-grid, #root .tattoo-mosaic');
+  if(grid && grid.parentNode) grid.parentNode.insertBefore(resultsWrap, grid);
+  else { var filters=document.querySelector('.tattoo-filters'); if(filters && filters.parentNode) filters.parentNode.insertBefore(resultsWrap, filters.nextSibling); else if(wrap && wrap.parentNode) wrap.parentNode.insertBefore(resultsWrap, wrap.nextSibling); else document.body.appendChild(resultsWrap); }
+  thumbImg=topRow.querySelector('.tf-top-thumb'); statusEl=topRow.querySelector('.tf-top-status'); xBtn=topRow.querySelector('.tf-top-x');
   fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
   fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
   document.body.appendChild(fileInput);
-  bar.querySelector('.tf-pick').addEventListener('click',function(){ fileInput.click(); });
+  topRow.querySelector('.tf-top-cam').addEventListener('click',function(){ fileInput.click(); });
+  xBtn.addEventListener('click',function(){ clearPhoto(); });
 }
-function setStatus(t,busy){ if(statusEl){ statusEl.textContent=t||''; statusEl.classList.toggle('tf-busy',!!busy); } }
-function renderOverlay(){
-  if(!bar) return;
+function ensurePosition(){
+  var inp=document.querySelector('input[aria-label="Buscar tattoos"]');
+  if(!inp || !topRow) return;
+  var searchWrap=inp.parentElement;
+  if(searchWrap && topRow.nextSibling!==searchWrap){
+    if(searchWrap.parentNode) searchWrap.parentNode.insertBefore(topRow, searchWrap);
+  }
+  var grid=document.querySelector('#root .tattoo-grid:not(.tf-photo-grid), #root .tattoo-mosaic');
+  if(grid && resultsWrap && resultsWrap.nextSibling!==grid){
+    if(grid.parentNode) grid.parentNode.insertBefore(resultsWrap, grid);
+  }
+}
+function setStatus(t,done){ if(!statusEl) return; statusEl.textContent=t||''; statusEl.classList.toggle('done',!!done); }
+function renderProgress(){
+  if(!resultsGrid) return;
   var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); var q=(inp?inp.value:'').trim().toLowerCase();
-  var list=(S.items||[]).slice().sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
+  var list=(S.items||[]).filter(function(it){ return S.scored && S.scored[it.clave]; });
+  list.sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
   if(q){
     list=list.filter(function(it){
       var hay=(it.clave+' '+it.cat+' '+it.keys+' '+it.color+' '+it.size).toLowerCase();
       return q.split(/\s+/).every(function(w){ return hay.indexOf(w)!==-1; });
     });
   }
-  var show=list.slice(0,60); resultsEl.innerHTML='';
+  var show=list.slice(0,60);
+  resultsGrid.innerHTML='';
   show.forEach(function(it){
-    var card=document.createElement('div'); card.className='tf-photo-card';
-    card.innerHTML='<img src="'+thumbUrl(it.img)+'" alt="'+it.clave+'"><b>'+it.clave+'</b><span>'+(it.ancho||'')+' × '+(it.alto||'')+' cm · '+it.cat+'</span>';
-    card.addEventListener('click',function(){ openDetailFor(it.clave); });
-    resultsEl.appendChild(card);
+    var art=document.createElement('article');
+    art.className='tattoo-card rounded-[10px] overflow-hidden bg-white border border-zinc-100 shadow-[0_6px_24px_rgba(0,0,0,0.05)] cursor-pointer hover:shadow-[0_14px_36px_rgba(0,0,0,0.10)] transition';
+    art.innerHTML='<div class="tattoo-card-image"><img class="tattoo-card-img" src="'+thumbUrl(it.img)+'" alt="'+it.clave+'"></div><div class="tattoo-card-info"><h3>'+it.clave+'</h3><p class="text-zinc-700 font-semibold">'+(it.size||'')+'</p><p class="text-zinc-500 tattoo-card-meta"><span>'+(it.ancho||'')+' × '+(it.alto||'')+' cm</span></p><p class="text-zinc-500 break-words">'+(it.categoria||'')+'</p></div>';
+    art.addEventListener('click',function(){ openDetailFor(it.clave); });
+    resultsGrid.appendChild(art);
   });
+  if(show.length){
+    resultsWrap.style.display='block';
+    document.body.classList.add('tf-photo-done');
+  }
 }
 function clearPhoto(){
   S.gen++;
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
-  S.url=null; S.hash=null; S.hist=null; S.dom=null; S.scores=null;
-  if(thumbBox){thumbBox.style.display='none'; thumbBox.innerHTML='';}
-  if(resultsEl) resultsEl.innerHTML='';
-  setStatus('', false);
+  S.url=null; S.hash=null; S.hist=null; S.aspect=0; S.scores=null; S.scored=null;
+  if(thumbImg){thumbImg.style.display='none'; thumbImg.src='';}
+  if(statusEl) statusEl.textContent='';
+  if(xBtn) xBtn.style.display='none';
+  if(resultsWrap) resultsWrap.style.display='none';
+  document.body.classList.remove('tf-photo-done');
 }
 function openDetailFor(clave){
   var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); if(!inp) return;
-  try{
-    var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
-    setter.call(inp, clave);
-    inp.dispatchEvent(new Event('input',{bubbles:true}));
-  }catch(_){}
+  try{ var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set; setter.call(inp, clave); inp.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
   setTimeout(function(){
-    var cards=$all('.tattoo-card');
-    for(var i=0;i<cards.length;i++){
-      var h=cards[i].querySelector('h3'); if(h&&h.textContent.trim()===clave){ cards[i].click(); break; }
-    }
+    var cards=$all('#root .tattoo-card');
+    for(var i=0;i<cards.length;i++){ var h=cards[i].querySelector('h3'); if(h&&h.textContent.trim()===clave){ cards[i].click(); break; } }
+    document.body.classList.remove('tf-photo-done');
+    setTimeout(function(){ if(S.scores) document.body.classList.add('tf-photo-done'); }, 800);
   }, 400);
 }
 function onPick(file){
-  buildBar();
+  buildTop(); ensurePosition();
   S.gen++; var my=S.gen;
   var url=URL.createObjectURL(file);
   if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
   S.url=url;
-  thumbBox.style.display='flex'; thumbBox.innerHTML='<img src="'+url+'" alt="Foto buscada"><span>Foto lista</span><button type="button">× Quitar foto</button>';
-  thumbBox.querySelector('button').addEventListener('click',function(){ clearPhoto(); });
-  setStatus('Analizando tu foto…', true);
+  thumbImg.src=url; thumbImg.style.display='block';
+  xBtn.style.display='grid';
+  if(resultsWrap) resultsWrap.style.display='none';
+  document.body.classList.remove('tf-photo-done');
+  setStatus('Analizando…', false);
   var im=new Image();
   im.onload=function(){
     if(my!==S.gen) return;
-    var f=feat(im); if(!f){ setStatus('No pude leer esa foto, intenta con otra.', false); return; }
-    S.hash=f.hash; S.hist=f.hist; S.dom=f.dom; rank(my);
+    var f=feat(im); if(!f){ setStatus('No pude leer esa foto', false); return; }
+    S.hash=f.hash; S.hist=f.hist; S.aspect=f.aspect; S.inkColor=f.inkColor; S.inkRatio=f.inkRatio; window.__tfQCol=f.inkColor; window.__tfQRatio=f.inkRatio; rank(my);
   };
-  im.onerror=function(){ setStatus('No pude leer esa foto, intenta con otra.', false); };
+  im.onerror=function(){ setStatus('No pude leer esa foto', false); };
   im.src=url;
 }
 async function rank(my){
-  setStatus('Buscando las más parecidas…', true);
   await sleep(10); if(my!==S.gen) return;
-  var items=getCatalog(); if(!items.length){ setStatus('No pude leer el catálogo, recarga la página.', false); return; }
-  items.forEach(function(it){ it.cScore=colorScore(it.color, S.dom); });
-  items.sort(function(a,b){return b.cScore-a.cScore;});
-  var top=items.slice(0,300); var scores={}; items.forEach(function(it){ scores[it.clave]=it.cScore*0.45; });
-  S.scores=scores; renderOverlay(); setStatus('Comparando… 0 / 300', true);
-  for(var i=0;i<top.length;i+=2){
+  var items=getCatalog(); if(!items.length){ setStatus('No pude leer el catálogo', false); return; }
+  var cand=items.filter(function(it){
+    if(!it.ancho||!it.alto||!S.aspect) return true;
+    var a=it.ancho/it.alto; var diff=Math.abs(a-S.aspect)/S.aspect; return diff<0.35;
+  });
+  if(cand.length<60) cand=items;
+  var scores={}; var scored={}; items.forEach(function(it){ scores[it.clave]=0; }); S.scores=scores; S.scored=scored;
+  var total=cand.length;
+  setStatus('Comparando… 0 / '+total, false);
+  for(var start=0; start<cand.length; start+=80){
     if(my!==S.gen) return;
-    var batch=top.slice(i,i+2);
-    for(var k=0;k<batch.length;k++){
+    var chunk=cand.slice(start, start+80);
+    for(var ci=0; ci<chunk.length; ci+=8){
       if(my!==S.gen) return;
-      var it=batch[k]; var th=await loadThumb(it.img); if(my!==S.gen) return;
-      if(th){ var f=feat(th); if(f){ var hd=hashD(S.hash,f.hash); var hsd=histD(S.hist,f.hist); var v=1-(0.55*hd+0.45*hsd); if(v<0)v=0; if(v>1)v=1; if(hd<0.06&&hsd<0.12){ v=1; } scores[it.clave]=0.55*v+0.45*it.cScore; if(v>=0.98){ S.scores=scores; renderOverlay(); setStatus('¡La encontré! Es idéntica a tu foto.', false); } } }
+      var group=chunk.slice(ci, ci+8);
+      var outs=await Promise.all(group.map(function(it){
+        return loadThumb(it.img).then(function(th){
+          if(!th) return null;
+          var f=feat(th); if(!f) return null;
+          var hd=hashD(S.hash,f.hash); var hsd=histD(S.hist,f.hist);
+          var c2=f.inkColor;
+          var colD=0; if(window.__tfQCol && c2){ var dR=(window.__tfQCol.r-c2.r)/255, dG=(window.__tfQCol.g-c2.g)/255, dB=(window.__tfQCol.b-c2.b)/255; colD=Math.sqrt(dR*dR+dG*dG+dB*dB)/1.732; }
+          var ratioD=Math.abs((window.__tfQRatio||0)-(f.inkRatio||0));
+          var v=1-(0.55*hd+0.10*hsd+0.25*colD+0.10*ratioD); if(v<0)v=0; if(v>1)v=1; if(hd<0.10) v=1; else if(hd<0.15&&colD<0.20) v=Math.max(v,0.97);
+          return {clave:it.clave, v:v};
+        });
+      }));
+      outs.forEach(function(o){ if(o){ scores[o.clave]=o.v; scored[o.clave]=true; } });
+      S.scores=scores; S.scored=scored;
+      setStatus('Comparando… '+Math.min(start+ci+8, total)+' / '+total, false);
+      renderProgress();
       await sleep(0);
+      var best=0; for(var kk in scores){ if(scores[kk]>best) best=scores[kk]; }
+      if(best>=0.99) break;
     }
-    S.scores=scores; renderOverlay(); setStatus('Comparando… '+Math.min(i+2,top.length)+' / '+top.length, true); await sleep(10);
+    var best2=0; for(var kk2 in scores){ if(scores[kk2]>best2) best2=scores[kk2]; }
+    if(best2>=0.99) break;
+  }
+  // Si en el pre-filtro por proporción no salió una igual, seguir con las demás hasta las 3411
+  var bestFinal=0; for(var bk in scores){ if(scores[bk]>bestFinal) bestFinal=scores[bk]; }
+  if(bestFinal < 0.99){
+    var rest=items.filter(function(it){ return cand.indexOf(it)===-1; });
+    if(rest.length){
+      var totalAll=items.length;
+      for(var rs=0; rs<rest.length; rs+=80){
+        if(my!==S.gen) return;
+        var rchunk=rest.slice(rs, rs+80);
+        for(var rci=0; rci<rchunk.length; rci+=8){
+          if(my!==S.gen) return;
+          var rgroup=rchunk.slice(rci, rci+8);
+          var routs=await Promise.all(rgroup.map(function(it){
+            return loadThumb(it.img).then(function(th){
+              if(!th) return null;
+              var f=feat(th); if(!f) return null;
+              var hd=hashD(S.hash,f.hash); var hsd=histD(S.hist,f.hist);
+              var c2=f.inkColor; var colD=0; if(window.__tfQCol && c2){ var dR=(window.__tfQCol.r-c2.r)/255, dG=(window.__tfQCol.g-c2.g)/255, dB=(window.__tfQCol.b-c2.b)/255; colD=Math.sqrt(dR*dR+dG*dG+dB*dB)/1.732; }
+              var ratioD=Math.abs((window.__tfQRatio||0)-(f.inkRatio||0));
+              var v=1-(0.55*hd+0.10*hsd+0.25*colD+0.10*ratioD); if(v<0)v=0; if(v>1)v=1; if(hd<0.10) v=1; else if(hd<0.15&&colD<0.20) v=Math.max(v,0.97);
+              return {clave:it.clave, v:v};
+            });
+          }));
+          routs.forEach(function(o){ if(o){ scores[o.clave]=o.v; scored[o.clave]=true; } });
+          S.scores=scores; S.scored=scored;
+          setStatus('Comparando… '+(cand.length+Math.min(rs+rci+8, rest.length))+' / '+totalAll, false);
+          renderProgress();
+          await sleep(0);
+          var rb=0; for(var rk in scores){ if(scores[rk]>rb) rb=scores[rk]; }
+          if(rb>=0.99) break;
+        }
+        var rb2=0; for(var rk2 in scores){ if(scores[rk2]>rb2) rb2=scores[rk2]; }
+        if(rb2>=0.99) break;
+      }
+    }
   }
   if(my!==S.gen) return;
-  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · × Quitar foto para volver a todo', false);
+  S.scores=scores; S.scored=scored;
+  setStatus('Listo', true);
+  renderProgress();
 }
-buildBar();
+buildTop();
+setInterval(ensurePosition, 400);
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.getAttribute&&e.target.getAttribute('aria-label')==='Buscar tattoos'){
+    if(S.scores) renderProgress();
+  }
+},true);
 })();
 </script>
 
