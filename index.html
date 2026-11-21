@@ -5149,296 +5149,215 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
-<script id="tf-4puntos-js">
+<style id="tf-fix-css">
+.tf-photo-float-btn{position:fixed;z-index:60;width:34px;height:34px;border-radius:999px;background:#f4f4f5;border:1px solid #e4e4e7;display:grid;place-items:center;cursor:pointer;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tf-photo-float-chip{position:fixed;z-index:60;height:34px;display:flex;align-items:center;gap:4px;background:#f4f4f5;border:1px solid #e4e4e7;border-radius:10px;padding:2px 6px 2px 2px}
+.tf-photo-float-chip img{width:30px;height:30px;object-fit:cover;border-radius:7px;display:block}
+.tf-photo-float-chip button{width:20px;height:20px;border-radius:999px;background:#18181b;color:#fff;font-size:12px;line-height:1;display:grid;place-items:center;cursor:pointer}
+.tf-photo-overlay{margin:10px 12px 0;padding:10px;background:#fff;border:2px solid #18181b;border-radius:14px}
+.tf-photo-overlay h4{margin:0 0 6px;font-size:13px;font-weight:900}
+.tf-photo-overlay p.tf-status{margin:0 0 8px;font-size:11px;font-weight:700;color:#15803d}
+.tf-photo-overlay p.tf-status.tf-busy{color:#92400e}
+.tf-photo-results{display:flex;flex-wrap:wrap;gap:8px}
+.tf-photo-card{width:calc(33.333% - 6px);border:1px solid #e4e4e7;border-radius:10px;overflow:hidden;cursor:pointer;background:#fff;text-align:center}
+.tf-photo-card img{width:100%;height:110px;object-fit:contain;display:block;background:#fff}
+.tf-photo-card b{display:block;font-size:11px;padding:4px 2px 0}
+.tf-photo-card span{display:block;font-size:10px;color:#71717a;padding:0 2px 6px}
+body.tf-photo-active .tattoo-grid, body.tf-photo-active .tattoo-mosaic{display:none !important}
+</style>
+<script id="tf-fix-js">
 (function(){
 "use strict";
-function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-function findSearchInput(){ return document.querySelector('input[aria-label="Buscar tattoos"]'); }
-function findGrid(){ return document.querySelector('.tattoo-mosaic, .tattoo-grid'); }
-function findDetailModal(){ return document.querySelector('.tattoo-detail-modal'); }
-function closeDetail(){
-  var modal = findDetailModal(); if(!modal) return;
-  var btn = modal.querySelector('button[aria-label="Cerrar"]');
-  if(btn){ btn.click(); return; }
-  modal.click();
+function $all(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));}
+function findInput(){return document.querySelector('input[aria-label="Buscar tattoos"]');}
+function findModal(){return document.querySelector('.tattoo-detail-modal');}
+function closeDetail(){var m=findModal(); if(!m) return; var b=m.querySelector('button[aria-label="Cerrar"]'); if(b){b.click();return;} m.click();}
+/* --- Cerrar detalle deslizando abajo, sin barra ni mensaje --- */
+var dw=null;
+function wireDetail(m){
+  if(!m||dw===m) return; dw=m;
+  var d=m.querySelector('.tattoo-detail'); if(!d) return;
+  var sy=0,sx=0,cy=0,act=false; var info=m.querySelector('.tattoo-detail-info');
+  function st(e){ if(!e.touches||e.touches.length!==1) return; if(info&&e.target.closest&&e.target.closest('.tattoo-detail-info')&&info.scrollTop>0) return; var t=e.touches[0]; sy=t.clientY; sx=t.clientX; cy=0; act=true; }
+  function mv(e){ if(!act||!e.touches||e.touches.length!==1) return; var t=e.touches[0]; var dy=t.clientY-sy, dx=t.clientX-sx; if(dy<0) dy=0; if(Math.abs(dx)>70&&Math.abs(dx)>dy*1.4){act=false; d.style.transform=''; d.style.opacity=''; return;} if(dy>8){cy=dy; d.style.transform='translateY('+dy+'px)'; d.style.opacity=String(Math.max(0.35,1-dy/420));} }
+  function en(){ if(!act) return; act=false; if(cy>110){d.style.transform=''; d.style.opacity=''; closeDetail();} else {d.style.transform=''; d.style.opacity='';} cy=0; }
+  d.addEventListener('touchstart',st,{passive:true}); d.addEventListener('touchmove',mv,{passive:true}); d.addEventListener('touchend',en,{passive:true}); d.addEventListener('touchcancel',en,{passive:true});
 }
-var detailWired = null;
-function wireDetail(modal){
-  if(!modal || detailWired === modal) return;
-  detailWired = modal;
-  var detail = modal.querySelector('.tattoo-detail');
-  if(!detail) return;
-  var startY=0, startX=0, curY=0, active=false, startT=0;
-  var info = modal.querySelector('.tattoo-detail-info');
-  function onStart(e){
-    if(!e.touches || e.touches.length!==1) return;
-    var t = e.touches[0];
-    // Si el panel de info está scrolleado, deja scrollear, no cierres
-    if(info && e.target.closest && e.target.closest('.tattoo-detail-info') && info.scrollTop > 0) return;
-    startY = t.clientY; startX = t.clientX; curY = 0; active = true; startT = Date.now();
+new MutationObserver(function(){var m=findModal(); if(m) wireDetail(m);}).observe(document.documentElement,{childList:true,subtree:true});
+/* --- Búsqueda por foto: NO toca el DOM de React, usa su propio listado --- */
+var S={url:null,hash:null,hist:null,dom:null,scores:null,items:[],gen:0,overlay:null,statusEl:null};
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms);});};
+function thumbUrl(u){try{var m=String(u).match(/id=([^&]+)/); if(m) return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200';}catch(_){} return u;}
+function parseLine(line){var o=[],cur='',q=false; for(var i=0;i<line.length;i++){var c=line[i]; if(q){if(c==='"'){if(line[i+1]==='"'){cur+='"'; i++;}else q=false;}else cur+=c;}else{if(c==='"') q=true; else if(c===','){o.push(cur); cur='';}else cur+=c;}} o.push(cur); return o;}
+function getCatalog(){
+  if(S.items.length) return S.items;
+  var scripts=document.querySelectorAll('script'); var raw=null;
+  for(var i=0;i<scripts.length;i++){var t=scripts[i].textContent||''; var s=t.indexOf('var Gs=`'); if(s!==-1){var e=t.indexOf('`;',s); if(e!==-1){raw=t.substring(s+8,e); break;}}}
+  if(!raw) return [];
+  var lines=raw.split('\\r\n'); if(lines.length<10) lines=raw.split('\n');
+  var items=[];
+  for(var j=1;j<lines.length;j++){var line=lines[j]; if(!line||line.length<3) continue; var f=parseLine(line); if(!f[0]) continue; items.push({clave:String(f[0]).trim(),img:f[1]||'',color:f[7]||'',cat:f[3]||'',ancho:f[4]||'',alto:f[5]||'',keys:f[6]||'',size:f[8]||''});}
+  S.items=items; return items;
+}
+function feat(img){
+  try{
+    var c=document.createElement('canvas'); c.width=32; c.height=32; var ctx=c.getContext('2d',{willReadFrequently:true}); ctx.drawImage(img,0,0,32,32); var d=ctx.getImageData(0,0,32,32).data;
+    var gray=[],hist=new Array(64).fill(0),rs=0,gs=0,bs=0,n=0;
+    for(var i=0;i<d.length;i+=4){var r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<10) continue; gray.push(0.299*r+0.587*g+0.114*b); rs+=r; gs+=g; bs+=b; n++; var ri=Math.min(3,Math.floor(r/64)),gi=Math.min(3,Math.floor(g/64)),bi=Math.min(3,Math.floor(b/64)); hist[ri*16+gi*4+bi]++;}
+    if(!n) return null; var avg=gray.reduce(function(x,y){return x+y;},0)/gray.length; var bits=gray.map(function(v){return v>=avg?1:0;}); var tot=hist.reduce(function(x,y){return x+y;},0)||1; hist=hist.map(function(v){return v/tot;}); return {hash:bits,hist:hist,dom:[rs/n,gs/n,bs/n]};
+  }catch(_){return null;}
+}
+function loadThumb(u){return new Promise(function(res){var im=new Image(); im.crossOrigin='anonymous'; var done=false; var to=setTimeout(function(){if(!done){done=true; res(null);}},4000); im.onload=function(){if(!done){done=true; clearTimeout(to); res(im);}}; im.onerror=function(){if(!done){done=true; clearTimeout(to); res(null);}}; im.src=thumbUrl(u);});}
+function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d;} return Math.sqrt(s);}
+function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
+var CM={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
+function colorScore(col,dom){if(!col||!dom) return 0.3; var parts=String(col).toLowerCase().split(/[|,]/),best=0; for(var i=0;i<parts.length;i++){var nm=parts[i].trim().split(' ')[0]; var rgb=CM[nm]; if(!rgb) continue; var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6; var s=1-d; if(s>best) best=s;} return best;}
+/* Botón y fotito FUERA del árbol de React: no los borra al re-renderizar */
+var floatBtn=null, floatChip=null, fileInput=null;
+function positionFloats(){
+  var inp=findInput(); if(!inp) return;
+  var r=inp.getBoundingClientRect();
+  if(floatBtn){ floatBtn.style.left=(r.right-42)+'px'; floatBtn.style.top=(r.top+7)+'px'; }
+  if(floatChip){ floatChip.style.left=(r.left+42)+'px'; floatChip.style.top=(r.top+7)+'px'; inp.style.paddingLeft = S.url ? '118px' : ''; }
+}
+function ensureFloats(){
+  if(!findInput()) return false;
+  if(!floatBtn){
+    floatBtn=document.createElement('button'); floatBtn.type='button'; floatBtn.className='tf-photo-float-btn'; floatBtn.textContent='📷'; floatBtn.title='Buscar por foto'; floatBtn.setAttribute('aria-label','Buscar por foto');
+    floatBtn.addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); if(fileInput) fileInput.click();});
+    document.body.appendChild(floatBtn);
+    fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
+    fileInput.addEventListener('change',function(){ if(fileInput.files&&fileInput.files[0]) onPick(fileInput.files[0]); fileInput.value=''; });
+    document.body.appendChild(fileInput);
+    window.addEventListener('scroll',positionFloats,true); window.addEventListener('resize',positionFloats);
   }
-  function onMove(e){
-    if(!active || !e.touches || e.touches.length!==1) return;
-    var t = e.touches[0];
-    var dy = t.clientY - startY, dx = t.clientX - startX;
-    if(dy < 0) dy = 0;
-    if(Math.abs(dx) > 70 && Math.abs(dx) > dy*1.4){ active=false; detail.style.transform=''; detail.style.opacity=''; return; }
-    if(dy > 8){
-      curY = dy;
-      detail.classList.add('tf-dragging');
-      detail.style.transform = 'translateY(' + dy + 'px)';
-      detail.style.opacity = String(Math.max(0.35, 1 - dy/420));
-    }
-  }
-  function onEnd(){
-    if(!active) return; active=false;
-    detail.classList.remove('tf-dragging');
-    if(curY > 110){ detail.style.transform=''; detail.style.opacity=''; closeDetail(); }
-    else { detail.style.transform=''; detail.style.opacity=''; }
-    curY=0;
-  }
-  detail.addEventListener('touchstart', onStart, {passive:true});
-  detail.addEventListener('touchmove', onMove, {passive:true});
-  detail.addEventListener('touchend', onEnd, {passive:true});
-  detail.addEventListener('touchcancel', onEnd, {passive:true});
-}
-var detailObserver = new MutationObserver(function(){
-  var m = findDetailModal(); if(m) wireDetail(m);
-});
-detailObserver.observe(document.documentElement, {childList:true, subtree:true});
-var photoState = { url:null, fileName:'', hash:null, hist:null, dom:null, scores:null, statusEl:null, busy:false };
-var csvCache = null;
-function parseCSV(text){
-  var rows=[], row=[], cur='', inQ=false;
-  for(var i=0;i<text.length;i++){
-    var c=text[i];
-    if(inQ){
-      if(c==='"'){ if(text[i+1]==='"'){cur+='"'; i++;} else inQ=false; }
-      else cur+=c;
-    } else {
-      if(c==='"') inQ=true;
-      else if(c===','){ row.push(cur); cur=''; }
-      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
-      else if(c==='\r'){}
-      else cur+=c;
-    }
-  }
-  if(cur!==''||row.length) { row.push(cur); rows.push(row); }
-  return rows;
-}
-function getCSV(){
-  if(csvCache) return Promise.resolve(csvCache);
-  return fetch(window.location.href, {cache:'force-cache'}).then(function(r){ return r.text(); }).then(function(html){
-    var m = html.match(/var Gs=`([\s\S]*?)`;/);
-    if(!m) throw new Error('no Gs');
-    var raw = m[1];
-    raw = raw.replace(/\\r\n/g, '\n').replace(/\\r/g, '\n');
-    var rows = parseCSV(raw);
-    csvCache = rows;
-    return rows;
-  });
-}
-function imgToFeatures(img){
-  var c = document.createElement('canvas'); c.width=32; c.height=32;
-  var ctx = c.getContext('2d', {willReadFrequently:true});
-  try{ ctx.drawImage(img, 0, 0, 32, 32); }catch(_){ return null; }
-  var d;
-  try{ d = ctx.getImageData(0,0,32,32).data; }catch(_){ return null; }
-  var gray=[];
-  var hist = new Array(64).fill(0);
-  var rSum=0,gSum=0,bSum=0,n=0;
-  for(var i=0;i<d.length;i+=4){
-    var r=d[i], g=d[i+1], b=d[i+2], a=d[i+3];
-    if(a<10) continue;
-    var gv = 0.299*r+0.587*g+0.114*b;
-    gray.push(gv); rSum+=r; gSum+=g; bSum+=b; n++;
-    var ri=Math.min(3, Math.floor(r/64)), gi=Math.min(3, Math.floor(g/64)), bi=Math.min(3, Math.floor(b/64));
-    hist[(ri*16)+(gi*4)+bi] += 1;
-  }
-  if(!n) return null;
-  var avg = gray.reduce(function(a,b){return a+b;},0)/gray.length;
-  var bits = gray.map(function(v){ return v>=avg?1:0; });
-  var tot = hist.reduce(function(a,b){return a+b;},0)||1;
-  hist = hist.map(function(v){ return v/tot; });
-  return { hash: bits, hist: hist, dom:[rSum/n, gSum/n, bSum/n] };
-}
-function loadImg(url){
-  return new Promise(function(resolve){
-    var im = new Image();
-    im.crossOrigin = 'anonymous';
-    im.onload = function(){ resolve(im); };
-    im.onerror = function(){ resolve(null); };
-    im.src = url;
-    setTimeout(function(){ resolve(null); }, 6000);
-  });
-}
-function histDist(a,b){
-  var s=0; for(var i=0;i<a.length;i++){ var d=a[i]-b[i]; s+=d*d; } return Math.sqrt(s);
-}
-function hashDist(a,b){
-  var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){ if(a[i]!==b[i]) s++; } return s/Math.max(1, Math.min(a.length,b.length));
-}
-var COLOR_MAP = {negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
-function colorScore(csvColor, dom){
-  if(!csvColor || !dom) return 0.3;
-  var parts = String(csvColor).toLowerCase().split(/[|,]/);
-  var best = 0;
-  for(var i=0;i<parts.length;i++){
-    var name = parts[i].trim().split(' ')[0];
-    var rgb = COLOR_MAP[name]; if(!rgb) continue;
-    var d = Math.sqrt(Math.pow(rgb[0]-dom[0],2) + Math.pow(rgb[1]-dom[1],2) + Math.pow(rgb[2]-dom[2],2)) / 441.6;
-    var s = 1 - d; if(s>best) best=s;
-  }
-  return best;
-}
-function ensurePhotoUI(){
-  var input = findSearchInput(); if(!input) return false;
-  var wrap = input.parentElement; if(!wrap) return false;
-  if(wrap.querySelector('.tf-photo-btn')) return true;
-  wrap.style.position = 'relative';
-  var btn = document.createElement('button');
-  btn.type='button'; btn.className='tf-photo-btn'; btn.title='Buscar por foto'; btn.setAttribute('aria-label','Buscar por foto');
-  btn.textContent='📷';
-  btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var fi=document.getElementById('tf-photo-file'); if(fi) fi.click(); });
-  wrap.appendChild(btn);
-  var file = document.createElement('input');
-  file.type='file'; file.id='tf-photo-file'; file.accept='image/*'; file.style.display='none';
-  file.addEventListener('change', function(){ if(file.files && file.files[0]) onPhotoPicked(file.files[0]); file.value=''; });
-  wrap.appendChild(file);
-  input.addEventListener('keydown', function(e){
-    if(e.key==='Backspace' && photoState.url){
-      var pos = (typeof input.selectionStart==='number') ? input.selectionStart : 0;
-      var end = (typeof input.selectionEnd==='number') ? input.selectionEnd : 0;
-      if(pos===0 && end===0){ e.preventDefault(); clearPhoto(); }
-    }
-  });
-  return true;
+  positionFloats(); return true;
 }
 function showChip(){
-  var input = findSearchInput(); if(!input) return;
-  var wrap = input.parentElement;
-  var old = wrap.querySelector('.tf-photo-chip'); if(old) old.remove();
-  if(!photoState.url) { input.style.paddingLeft=''; return; }
-  var chip = document.createElement('span');
-  chip.className='tf-photo-chip';
-  chip.innerHTML = '<img alt="Foto buscada" src="'+photoState.url+'"><button type="button" title="Quitar foto (o Backspace al inicio)">×</button>';
-  chip.querySelector('button').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); clearPhoto(); });
-  wrap.appendChild(chip);
-  input.style.paddingLeft = '118px';
-  input.focus();
+  var inp=findInput(); if(!inp) return;
+  if(floatChip) floatChip.remove(); floatChip=null;
+  if(!S.url){ inp.style.paddingLeft=''; return; }
+  floatChip=document.createElement('span'); floatChip.className='tf-photo-float-chip';
+  floatChip.innerHTML='<img alt="Foto buscada" src="'+S.url+'"><button type="button">×</button>';
+  floatChip.querySelector('button').addEventListener('click',function(e){e.preventDefault(); e.stopPropagation(); clearPhoto();});
+  document.body.appendChild(floatChip);
+  positionFloats();
 }
-function setStatus(text, busy){
-  var input = findSearchInput(); if(!input) return;
-  var wrap = input.parentElement;
-  var el = wrap.parentElement.querySelector('.tf-photo-status');
-  if(!text){ if(el) el.remove(); photoState.statusEl=null; return; }
-  if(!el){ el=document.createElement('div'); el.className='tf-photo-status'; wrap.parentElement.appendChild(el); photoState.statusEl=el; }
-  el.textContent = text;
-  el.classList.toggle('tf-busy', !!busy);
+function ensureOverlay(){
+  if(S.overlay) return S.overlay;
+  var main=document.querySelector('main'); if(!main) return null;
+  var box=document.createElement('div'); box.className='tf-photo-overlay'; box.style.display='none';
+  box.innerHTML='<h4>Las más parecidas a tu foto</h4><p class="tf-status"></p><div class="tf-photo-results"></div>';
+  S.overlay=box; S.statusEl=box.querySelector('.tf-status');
+  // Insertar ANTES del main, fuera de #root, para que React no lo borre
+  var root=document.getElementById('root');
+  if(root&&root.parentNode) root.parentNode.insertBefore(box, root.nextSibling);
+  else document.body.insertBefore(box, document.body.firstChild);
+  return box;
+}
+function setStatus(t,busy){ ensureOverlay(); if(S.statusEl){ S.statusEl.textContent=t||''; S.statusEl.classList.toggle('tf-busy',!!busy); } }
+function renderOverlay(){
+  var box=ensureOverlay(); if(!box) return;
+  var inp=findInput(); var q=(inp?inp.value:'').trim().toLowerCase();
+  var list=(S.items||[]).slice().sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
+  if(q){
+    list=list.filter(function(it){
+      var hay=(it.clave+' '+it.cat+' '+it.keys+' '+it.color+' '+it.size).toLowerCase();
+      return q.split(/\s+/).every(function(w){ return hay.indexOf(w)!==-1; });
+    });
+  }
+  var show=list.slice(0,60);
+  var cont=box.querySelector('.tf-photo-results'); cont.innerHTML='';
+  show.forEach(function(it){
+    var card=document.createElement('div'); card.className='tf-photo-card';
+    card.innerHTML='<img src="'+thumbUrl(it.img)+'" alt="'+it.clave+'"><b>'+it.clave+'</b><span>'+(it.ancho||'')+' × '+(it.alto||'')+' cm · '+it.cat+'</span>';
+    card.addEventListener('click',function(){ openDetailFor(it.clave); });
+    cont.appendChild(card);
+  });
+  box.style.display='block';
+  document.body.classList.add('tf-photo-active');
 }
 function clearPhoto(){
-  if(photoState.url){ try{ URL.revokeObjectURL(photoState.url); }catch(_){} }
-  photoState.url=null; photoState.fileName=''; photoState.hash=null; photoState.hist=null; photoState.dom=null; photoState.scores=null;
-  var input=findSearchInput(); if(input) input.style.paddingLeft='';
-  var wrap = input ? input.parentElement : null;
-  if(wrap){ var c=wrap.querySelector('.tf-photo-chip'); if(c) c.remove(); }
-  setStatus('');
-  applyRanking();
+  S.gen++;
+  if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
+  S.url=null; S.hash=null; S.hist=null; S.dom=null; S.scores=null;
+  if(floatChip){floatChip.remove(); floatChip=null;}
+  var inp=findInput(); if(inp) inp.style.paddingLeft='';
+  if(S.overlay) S.overlay.style.display='none';
+  document.body.classList.remove('tf-photo-active');
+  positionFloats();
 }
-var __ordenando=false, __ordenTimer=null;
-function applyRanking(){
-  var grid = findGrid(); if(!grid) return;
-  if(!photoState.scores) return;
-  if(__ordenando) return;
-  __ordenando=true;
-  try{
-    var cards = $all('.tattoo-card', grid);
-    cards.sort(function(a,b){
-      var ka = (a.querySelector('h3')||{}).textContent||'';
-      var kb = (b.querySelector('h3')||{}).textContent||'';
-      var sa = (ka in photoState.scores) ? photoState.scores[ka] : -1;
-      var sb = (kb in photoState.scores) ? photoState.scores[kb] : -1;
-      return sb - sa;
-    });
-    cards.forEach(function(card){ grid.appendChild(card); });
-  }catch(_){}
-  setTimeout(function(){ __ordenando=false; }, 250);
+function openDetailFor(clave){
+  var inp=findInput(); if(!inp) return;
+  // Hacer que React filtre a esa clave y luego tocar su tarjeta
+  var setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;
+  setter.call(inp, clave);
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+  inp.dispatchEvent(new Event('change',{bubbles:true}));
+  setTimeout(function(){
+    var cards=$all('.tattoo-card');
+    for(var i=0;i<cards.length;i++){
+      var h=cards[i].querySelector('h3'); if(h&&h.textContent.trim()===clave){ cards[i].click(); break; }
+    }
+  }, 400);
 }
-var gridObserver = new MutationObserver(function(){
-  if(__ordenando) return;
-  ensurePhotoUI();
-  if(photoState.scores){
-    if(__ordenTimer) clearTimeout(__ordenTimer);
-    __ordenTimer=setTimeout(function(){ applyRanking(); }, 200);
-  }
-});
-gridObserver.observe(document.documentElement, {childList:true, subtree:true});
-function onPhotoPicked(file){
-  ensurePhotoUI();
-  var url = URL.createObjectURL(file);
-  photoState.url = url; photoState.fileName = file.name || 'foto';
-  showChip();
+function onPick(file){
+  ensureFloats();
+  S.gen++; var my=S.gen;
+  var url=URL.createObjectURL(file);
+  if(S.url){try{URL.revokeObjectURL(S.url);}catch(_){}}
+  S.url=url; showChip();
   setStatus('Analizando tu foto…', true);
-  var im = new Image();
-  im.onload = function(){
-    var feat = imgToFeatures(im);
-    if(!feat){ setStatus('No pude leer esa foto, intenta con otra.', false); return; }
-    photoState.hash=feat.hash; photoState.hist=feat.hist; photoState.dom=feat.dom;
-    rankCatalog();
+  // Quitar foco del buscador para que React no lo borre mientras buscamos
+  var im=new Image();
+  im.onload=function(){
+    if(my!==S.gen) return;
+    var f=feat(im); if(!f){ setStatus('No pude leer esa foto, intenta con otra.', false); return; }
+    S.hash=f.hash; S.hist=f.hist; S.dom=f.dom; rank(my);
   };
-  im.onerror = function(){ setStatus('No pude leer esa foto, intenta con otra.', false); };
-  im.src = url;
+  im.onerror=function(){ setStatus('No pude leer esa foto, intenta con otra.', false); };
+  im.src=url;
 }
-function rankCatalog(){
-  setStatus('Buscando las más parecidas… (primero por color, luego por forma)', true);
-  getCSV().then(function(rows){
-    if(!rows || rows.length<2){ setStatus('No pude leer el catálogo para buscar por foto.', false); return; }
-    var items = [];
-    for(var i=1;i<rows.length;i++){
-      var r = rows[i]; if(!r || !r[0]) continue;
-      items.push({ clave:String(r[0]).trim(), img:r[1]||'', color:r[7]||'' });
+async function rank(my){
+  setStatus('Buscando las más parecidas…', true);
+  await sleep(10); if(my!==S.gen) return;
+  var items=getCatalog(); if(!items.length){ setStatus('No pude leer el catálogo, recarga la página.', false); return; }
+  items.forEach(function(it){ it.cScore=colorScore(it.color, S.dom); });
+  items.sort(function(a,b){return b.cScore-a.cScore;});
+  var top=items.slice(0,60); var scores={}; items.forEach(function(it){ scores[it.clave]=it.cScore*0.45; });
+  S.scores=scores; renderOverlay(); setStatus('Comparando… 0 / 60', true);
+  for(var i=0;i<top.length;i+=2){
+    if(my!==S.gen) return;
+    var batch=top.slice(i,i+2);
+    for(var k=0;k<batch.length;k++){
+      if(my!==S.gen) return;
+      var it=batch[k]; var th=await loadThumb(it.img,4000); if(my!==S.gen) return;
+      if(th){ var f=feat(th); if(f){ var v=1-(0.55*hashD(S.hash,f.hash)+0.45*histD(S.hist,f.hist)); if(v<0)v=0; if(v>1)v=1; scores[it.clave]=0.55*v+0.45*it.cScore; } }
+      await sleep(0);
     }
-    items.forEach(function(it){ it.cScore = colorScore(it.color, photoState.dom); });
-    items.sort(function(a,b){ return b.cScore - a.cScore; });
-    var top = items.slice(0, 220);
-    var scores = {};
-    items.forEach(function(it){ scores[it.clave] = it.cScore * 0.45; });
-    var idx=0, done=0;
-    function nextBatch(){
-      var batch = top.slice(idx, idx+8); idx+=8;
-      if(!batch.length){ finish(); return; }
-      var promises = batch.map(function(it){
-        return loadImg(it.img).then(function(im){
-          if(!im) return;
-          var f = null; try{ f = imgToFeatures(im); }catch(_){ f=null; } if(!f) return;
-          var v = 1 - (0.55*hashDist(photoState.hash, f.hash) + 0.45*histDist(photoState.hist, f.hist));
-          if(v<0) v=0; if(v>1) v=1;
-          scores[it.clave] = 0.55*v + 0.45*it.cScore;
-        });
-      });
-      Promise.all(promises).catch(function(){}).then(function(){
-        done += batch.length;
-        setStatus('Comparando… ' + Math.min(done, top.length) + ' / ' + top.length + ' más cercanas por color', true);
-        photoState.scores = scores; applyRanking();
-        setTimeout(nextBatch, 10);
-      });
-    }
-    function finish(){
-      photoState.scores = scores;
-      applyRanking();
-      setStatus('Búsqueda por foto: las más parecidas primero · escribe palabras para afinar · Backspace al inicio quita la foto', false);
-    }
-    nextBatch();
-  }).catch(function(){
-    setStatus('No pude buscar por foto en este navegador, intenta recargar.', false);
-  });
+    S.scores=scores; renderOverlay(); setStatus('Comparando… '+Math.min(i+2,top.length)+' / '+top.length, true); await sleep(10);
+  }
+  if(my!==S.gen) return;
+  S.scores=scores; renderOverlay(); setStatus('Las más parecidas primero · escribe para afinar · Backspace al inicio quita la foto', false);
 }
-var tries=0;
-var boot = setInterval(function(){
-  tries++;
-  if(ensurePhotoUI() || tries>100) clearInterval(boot);
-}, 300);
+/* Backspace al inicio quita la foto, sin romper el buscador */
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Backspace'||!S.url) return;
+  var inp=findInput(); if(!inp||document.activeElement!==inp) return;
+  var pos=(typeof inp.selectionStart==='number')?inp.selectionStart:0;
+  var end=(typeof inp.selectionEnd==='number')?inp.selectionEnd:0;
+  if(pos===0&&end===0){ e.preventDefault(); clearPhoto(); }
+},true);
+/* Escribir filtra también el listado de foto, sin tocar el grid de React */
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.getAttribute&&e.target.getAttribute('aria-label')==='Buscar tattoos'){
+    positionFloats();
+    if(S.scores) renderOverlay();
+  }
+},true);
+var t=0; var boot=setInterval(function(){ t++; if(ensureFloats()||t>100) clearInterval(boot); },300);
 })();
 </script>
+
 </body>
 </html>
