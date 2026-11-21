@@ -5149,7 +5149,7 @@ ZZC-30,https://drive.google.com/uc?export=view&id=1lw5uHq3uw9qABqO6EBiMN277GVI8F
 </script>
   <script>(function(){function m(a){var h=a.getAttribute("href");if(!h)return;try{var u=new URL(h,document.baseURI);if(((u.protocol==="http:"||u.protocol==="https:")&&u.host!==location.host)||u.protocol==="mailto:"||u.protocol==="tel:"||u.protocol==="sms:"){a.target="_blank";a.rel="noopener noreferrer";}}catch(e){}}function s(){document.querySelectorAll("a[href]").forEach(m);}if(document.readyState!=="loading"){s();}else{document.addEventListener("DOMContentLoaded",s);}document.addEventListener("click",function(e){var a=e.target&&e.target.closest&&e.target.closest("a[href]");if(a){m(a);}},true);})();</script>
   <script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
-<script id="tf-4puntos-js-v2">
+<script id="tf-4puntos-js">
 (function(){
 "use strict";
 function $all(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
@@ -5162,20 +5162,20 @@ function closeDetail(){
   if(btn){ btn.click(); return; }
   modal.click();
 }
-/* ---- PUNTO 2: deslizar hacia abajo para cerrar, sin barra ni mensaje ---- */
 var detailWired = null;
 function wireDetail(modal){
   if(!modal || detailWired === modal) return;
   detailWired = modal;
   var detail = modal.querySelector('.tattoo-detail');
   if(!detail) return;
-  var startY=0, startX=0, curY=0, active=false;
+  var startY=0, startX=0, curY=0, active=false, startT=0;
   var info = modal.querySelector('.tattoo-detail-info');
   function onStart(e){
     if(!e.touches || e.touches.length!==1) return;
-    if(info && e.target.closest && e.target.closest('.tattoo-detail-info') && info.scrollTop > 0) return;
     var t = e.touches[0];
-    startY = t.clientY; startX = t.clientX; curY = 0; active = true;
+    // Si el panel de info está scrolleado, deja scrollear, no cierres
+    if(info && e.target.closest && e.target.closest('.tattoo-detail-info') && info.scrollTop > 0) return;
+    startY = t.clientY; startX = t.clientX; curY = 0; active = true; startT = Date.now();
   }
   function onMove(e){
     if(!active || !e.touches || e.touches.length!==1) return;
@@ -5185,12 +5185,14 @@ function wireDetail(modal){
     if(Math.abs(dx) > 70 && Math.abs(dx) > dy*1.4){ active=false; detail.style.transform=''; detail.style.opacity=''; return; }
     if(dy > 8){
       curY = dy;
+      detail.classList.add('tf-dragging');
       detail.style.transform = 'translateY(' + dy + 'px)';
       detail.style.opacity = String(Math.max(0.35, 1 - dy/420));
     }
   }
   function onEnd(){
     if(!active) return; active=false;
+    detail.classList.remove('tf-dragging');
     if(curY > 110){ detail.style.transform=''; detail.style.opacity=''; closeDetail(); }
     else { detail.style.transform=''; detail.style.opacity=''; }
     curY=0;
@@ -5200,257 +5202,243 @@ function wireDetail(modal){
   detail.addEventListener('touchend', onEnd, {passive:true});
   detail.addEventListener('touchcancel', onEnd, {passive:true});
 }
-new MutationObserver(function(){ var m=findDetailModal(); if(m) wireDetail(m); }).observe(document.documentElement, {childList:true, subtree:true});
-
-/* ---- PUNTO 3: búsqueda por foto con similares ---- */
-var photoState = { url:null, hash:null, hist:null, dom:null, scores:null, gen:0 };
-var reordering = false;
-var sleep = function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
-
-function thumbUrl(url){
-  try{
-    var m = String(url).match(/id=([^&]+)/);
-    if(m) return 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w200';
-  }catch(_){}
-  return url;
-}
-function parseCSVLine(line){
-  var out=[], cur='', inQ=false;
-  for(var i=0;i<line.length;i++){
-    var c=line[i];
+var detailObserver = new MutationObserver(function(){
+  var m = findDetailModal(); if(m) wireDetail(m);
+});
+detailObserver.observe(document.documentElement, {childList:true, subtree:true});
+var photoState = { url:null, fileName:'', hash:null, hist:null, dom:null, scores:null, statusEl:null, busy:false };
+var csvCache = null;
+function parseCSV(text){
+  var rows=[], row=[], cur='', inQ=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
     if(inQ){
-      if(c==='"'){ if(line[i+1]==='"'){cur+='"'; i++;} else inQ=false; }
+      if(c==='"'){ if(text[i+1]==='"'){cur+='"'; i++;} else inQ=false; }
       else cur+=c;
     } else {
       if(c==='"') inQ=true;
-      else if(c===','){ out.push(cur); cur=''; }
+      else if(c===','){ row.push(cur); cur=''; }
+      else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; }
+      else if(c==='\r'){}
       else cur+=c;
     }
   }
-  out.push(cur);
-  return out;
+  if(cur!==''||row.length) { row.push(cur); rows.push(row); }
+  return rows;
 }
-function getCatalogFromPage(){
-  var scripts = document.querySelectorAll('script');
-  var raw = null;
-  for(var i=0;i<scripts.length;i++){
-    var t = scripts[i].textContent || '';
-    var s = t.indexOf('var Gs=`');
-    if(s!==-1){
-      var e = t.indexOf('`;', s);
-      if(e!==-1){ raw = t.substring(s+8, e); break; }
-    }
-  }
-  if(!raw) return [];
-  // En el archivo cada fila termina en  + salto real
-  var lines = raw.split('\r
-');
-  if(lines.length < 10) lines = raw.split('
-');
-  var items = [];
-  for(var j=1;j<lines.length;j++){
-    var line = lines[j];
-    if(!line || line.length < 3) continue;
-    var f = parseCSVLine(line);
-    if(!f[0]) continue;
-    items.push({ clave: String(f[0]).trim(), img: f[1]||'', color: f[7]||'' });
-  }
-  return items;
-}
-function imgToFeatures(img){
-  try{
-    var c = document.createElement('canvas'); c.width=32; c.height=32;
-    var ctx = c.getContext('2d', {willReadFrequently:true});
-    ctx.drawImage(img, 0, 0, 32, 32);
-    var d = ctx.getImageData(0,0,32,32).data;
-    var gray=[], hist=new Array(64).fill(0), rS=0,gS=0,bS=0,n=0;
-    for(var i=0;i<d.length;i+=4){
-      var r=d[i], g=d[i+1], b=d[i+2], a=d[i+3];
-      if(a<10) continue;
-      gray.push(0.299*r+0.587*g+0.114*b); rS+=r; gS+=g; bS+=b; n++;
-      var ri=Math.min(3,Math.floor(r/64)), gi=Math.min(3,Math.floor(g/64)), bi=Math.min(3,Math.floor(b/64));
-      hist[ri*16+gi*4+bi]++;
-    }
-    if(!n) return null;
-    var avg=gray.reduce(function(x,y){return x+y;},0)/gray.length;
-    var bits=gray.map(function(v){return v>=avg?1:0;});
-    var tot=hist.reduce(function(x,y){return x+y;},0)||1;
-    hist=hist.map(function(v){return v/tot;});
-    return {hash:bits, hist:hist, dom:[rS/n,gS/n,bS/n]};
-  }catch(_){ return null; }
-}
-function loadThumb(url, timeoutMs){
-  return new Promise(function(resolve){
-    var im=new Image(); im.crossOrigin='anonymous';
-    var done=false;
-    var to=setTimeout(function(){ if(!done){done=true; resolve(null);} }, timeoutMs||4000);
-    im.onload=function(){ if(!done){done=true; clearTimeout(to); resolve(im);} };
-    im.onerror=function(){ if(!done){done=true; clearTimeout(to); resolve(null);} };
-    im.src=thumbUrl(url);
+function getCSV(){
+  if(csvCache) return Promise.resolve(csvCache);
+  return fetch(window.location.href, {cache:'force-cache'}).then(function(r){ return r.text(); }).then(function(html){
+    var m = html.match(/var Gs=`([\s\S]*?)`;/);
+    if(!m) throw new Error('no Gs');
+    var raw = m[1];
+    raw = raw.replace(/\\r\n/g, '\n').replace(/\\r/g, '\n');
+    var rows = parseCSV(raw);
+    csvCache = rows;
+    return rows;
   });
 }
-function histDist(a,b){ var s=0; for(var i=0;i<a.length;i++){ var d=a[i]-b[i]; s+=d*d; } return Math.sqrt(s); }
-function hashDist(a,b){ var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){ if(a[i]!==b[i]) s++; } return s/Math.max(1,Math.min(a.length,b.length)); }
-var COLOR_MAP={negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
+function imgToFeatures(img){
+  var c = document.createElement('canvas'); c.width=32; c.height=32;
+  var ctx = c.getContext('2d', {willReadFrequently:true});
+  try{ ctx.drawImage(img, 0, 0, 32, 32); }catch(_){ return null; }
+  var d;
+  try{ d = ctx.getImageData(0,0,32,32).data; }catch(_){ return null; }
+  var gray=[];
+  var hist = new Array(64).fill(0);
+  var rSum=0,gSum=0,bSum=0,n=0;
+  for(var i=0;i<d.length;i+=4){
+    var r=d[i], g=d[i+1], b=d[i+2], a=d[i+3];
+    if(a<10) continue;
+    var gv = 0.299*r+0.587*g+0.114*b;
+    gray.push(gv); rSum+=r; gSum+=g; bSum+=b; n++;
+    var ri=Math.min(3, Math.floor(r/64)), gi=Math.min(3, Math.floor(g/64)), bi=Math.min(3, Math.floor(b/64));
+    hist[(ri*16)+(gi*4)+bi] += 1;
+  }
+  if(!n) return null;
+  var avg = gray.reduce(function(a,b){return a+b;},0)/gray.length;
+  var bits = gray.map(function(v){ return v>=avg?1:0; });
+  var tot = hist.reduce(function(a,b){return a+b;},0)||1;
+  hist = hist.map(function(v){ return v/tot; });
+  return { hash: bits, hist: hist, dom:[rSum/n, gSum/n, bSum/n] };
+}
+function loadImg(url){
+  return new Promise(function(resolve){
+    var im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = function(){ resolve(im); };
+    im.onerror = function(){ resolve(null); };
+    im.src = url;
+    setTimeout(function(){ resolve(null); }, 6000);
+  });
+}
+function histDist(a,b){
+  var s=0; for(var i=0;i<a.length;i++){ var d=a[i]-b[i]; s+=d*d; } return Math.sqrt(s);
+}
+function hashDist(a,b){
+  var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){ if(a[i]!==b[i]) s++; } return s/Math.max(1, Math.min(a.length,b.length));
+}
+var COLOR_MAP = {negro:[20,20,20],black:[20,20,20],blanco:[245,245,245],white:[245,245,245],rojo:[200,30,30],red:[200,30,30],azul:[40,80,200],blue:[40,80,200],verde:[40,150,70],green:[40,150,70],amarillo:[240,210,40],yellow:[240,210,40],morado:[130,50,180],purple:[130,50,180],rosa:[240,150,190],pink:[240,150,190],naranja:[240,130,30],orange:[240,130,30],gris:[130,130,130],grey:[130,130,130],gray:[130,130,130],cafe:[120,80,40],brown:[120,80,40],multicolor:[128,128,128],multicolored:[128,128,128],colorido:[128,128,128]};
 function colorScore(csvColor, dom){
-  if(!csvColor||!dom) return 0.3;
-  var parts=String(csvColor).toLowerCase().split(/[|,]/), best=0;
+  if(!csvColor || !dom) return 0.3;
+  var parts = String(csvColor).toLowerCase().split(/[|,]/);
+  var best = 0;
   for(var i=0;i<parts.length;i++){
-    var name=parts[i].trim().split(' ')[0];
-    var rgb=COLOR_MAP[name]; if(!rgb) continue;
-    var d=Math.sqrt(Math.pow(rgb[0]-dom[0],2)+Math.pow(rgb[1]-dom[1],2)+Math.pow(rgb[2]-dom[2],2))/441.6;
-    var s=1-d; if(s>best) best=s;
+    var name = parts[i].trim().split(' ')[0];
+    var rgb = COLOR_MAP[name]; if(!rgb) continue;
+    var d = Math.sqrt(Math.pow(rgb[0]-dom[0],2) + Math.pow(rgb[1]-dom[1],2) + Math.pow(rgb[2]-dom[2],2)) / 441.6;
+    var s = 1 - d; if(s>best) best=s;
   }
   return best;
 }
 function ensurePhotoUI(){
-  var input=findSearchInput(); if(!input) return false;
-  var wrap=input.parentElement; if(!wrap) return false;
+  var input = findSearchInput(); if(!input) return false;
+  var wrap = input.parentElement; if(!wrap) return false;
   if(wrap.querySelector('.tf-photo-btn')) return true;
-  wrap.style.position='relative';
-  var btn=document.createElement('button');
+  wrap.style.position = 'relative';
+  var btn = document.createElement('button');
   btn.type='button'; btn.className='tf-photo-btn'; btn.title='Buscar por foto'; btn.setAttribute('aria-label','Buscar por foto');
   btn.textContent='📷';
   btn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); var fi=document.getElementById('tf-photo-file'); if(fi) fi.click(); });
   wrap.appendChild(btn);
-  var file=document.createElement('input');
+  var file = document.createElement('input');
   file.type='file'; file.id='tf-photo-file'; file.accept='image/*'; file.style.display='none';
   file.addEventListener('change', function(){ if(file.files && file.files[0]) onPhotoPicked(file.files[0]); file.value=''; });
   wrap.appendChild(file);
   input.addEventListener('keydown', function(e){
     if(e.key==='Backspace' && photoState.url){
-      var pos=(typeof input.selectionStart==='number')?input.selectionStart:0;
-      var end=(typeof input.selectionEnd==='number')?input.selectionEnd:0;
+      var pos = (typeof input.selectionStart==='number') ? input.selectionStart : 0;
+      var end = (typeof input.selectionEnd==='number') ? input.selectionEnd : 0;
       if(pos===0 && end===0){ e.preventDefault(); clearPhoto(); }
     }
   });
   return true;
 }
 function showChip(){
-  var input=findSearchInput(); if(!input) return;
-  var wrap=input.parentElement;
-  var old=wrap.querySelector('.tf-photo-chip'); if(old) old.remove();
-  if(!photoState.url){ input.style.paddingLeft=''; return; }
-  var chip=document.createElement('span');
+  var input = findSearchInput(); if(!input) return;
+  var wrap = input.parentElement;
+  var old = wrap.querySelector('.tf-photo-chip'); if(old) old.remove();
+  if(!photoState.url) { input.style.paddingLeft=''; return; }
+  var chip = document.createElement('span');
   chip.className='tf-photo-chip';
-  chip.innerHTML='<img alt="Foto buscada" src="'+photoState.url+'"><button type="button" title="Quitar foto">×</button>';
+  chip.innerHTML = '<img alt="Foto buscada" src="'+photoState.url+'"><button type="button" title="Quitar foto (o Backspace al inicio)">×</button>';
   chip.querySelector('button').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); clearPhoto(); });
   wrap.appendChild(chip);
-  input.style.paddingLeft='118px';
+  input.style.paddingLeft = '118px';
+  input.focus();
 }
 function setStatus(text, busy){
-  var input=findSearchInput(); if(!input) return;
-  var wrap=input.parentElement;
-  var el=wrap.parentElement.querySelector('.tf-photo-status');
-  if(!text){ if(el) el.remove(); return; }
-  if(!el){ el=document.createElement('div'); el.className='tf-photo-status'; wrap.parentElement.appendChild(el); }
-  el.textContent=text;
+  var input = findSearchInput(); if(!input) return;
+  var wrap = input.parentElement;
+  var el = wrap.parentElement.querySelector('.tf-photo-status');
+  if(!text){ if(el) el.remove(); photoState.statusEl=null; return; }
+  if(!el){ el=document.createElement('div'); el.className='tf-photo-status'; wrap.parentElement.appendChild(el); photoState.statusEl=el; }
+  el.textContent = text;
   el.classList.toggle('tf-busy', !!busy);
 }
 function clearPhoto(){
-  photoState.gen++;
   if(photoState.url){ try{ URL.revokeObjectURL(photoState.url); }catch(_){} }
-  photoState.url=null; photoState.hash=null; photoState.hist=null; photoState.dom=null; photoState.scores=null;
+  photoState.url=null; photoState.fileName=''; photoState.hash=null; photoState.hist=null; photoState.dom=null; photoState.scores=null;
   var input=findSearchInput(); if(input) input.style.paddingLeft='';
-  var wrap=input?input.parentElement:null;
+  var wrap = input ? input.parentElement : null;
   if(wrap){ var c=wrap.querySelector('.tf-photo-chip'); if(c) c.remove(); }
   setStatus('');
+  applyRanking();
 }
+var __ordenando=false, __ordenTimer=null;
 function applyRanking(){
-  var grid=findGrid(); if(!grid) return;
+  var grid = findGrid(); if(!grid) return;
   if(!photoState.scores) return;
-  if(reordering) return;
-  reordering=true;
+  if(__ordenando) return;
+  __ordenando=true;
   try{
-    var cards=$all('.tattoo-card', grid);
+    var cards = $all('.tattoo-card', grid);
     cards.sort(function(a,b){
-      var ka=(a.querySelector('h3')||{}).textContent||'';
-      var kb=(b.querySelector('h3')||{}).textContent||'';
-      var sa=(ka in photoState.scores)?photoState.scores[ka]:-1;
-      var sb=(kb in photoState.scores)?photoState.scores[kb]:-1;
-      return sb-sa;
+      var ka = (a.querySelector('h3')||{}).textContent||'';
+      var kb = (b.querySelector('h3')||{}).textContent||'';
+      var sa = (ka in photoState.scores) ? photoState.scores[ka] : -1;
+      var sb = (kb in photoState.scores) ? photoState.scores[kb] : -1;
+      return sb - sa;
     });
     cards.forEach(function(card){ grid.appendChild(card); });
   }catch(_){}
-  setTimeout(function(){ reordering=false; }, 200);
+  setTimeout(function(){ __ordenando=false; }, 250);
 }
-var gridObserver=new MutationObserver(function(){
-  if(reordering) return;
+var gridObserver = new MutationObserver(function(){
+  if(__ordenando) return;
   ensurePhotoUI();
-  // React re-renderizó (por ejemplo al escribir): re-aplicar orden, con pausa
   if(photoState.scores){
-    setTimeout(function(){ if(!reordering) applyRanking(); }, 150);
+    if(__ordenTimer) clearTimeout(__ordenTimer);
+    __ordenTimer=setTimeout(function(){ applyRanking(); }, 200);
   }
 });
 gridObserver.observe(document.documentElement, {childList:true, subtree:true});
-
 function onPhotoPicked(file){
   ensurePhotoUI();
-  photoState.gen++;
-  var myGen=photoState.gen;
-  var url=URL.createObjectURL(file);
-  if(photoState.url){ try{ URL.revokeObjectURL(photoState.url); }catch(_){} }
-  photoState.url=url;
+  var url = URL.createObjectURL(file);
+  photoState.url = url; photoState.fileName = file.name || 'foto';
   showChip();
   setStatus('Analizando tu foto…', true);
-  var im=new Image();
-  im.onload=function(){
-    if(myGen!==photoState.gen) return;
-    var feat=imgToFeatures(im);
+  var im = new Image();
+  im.onload = function(){
+    var feat = imgToFeatures(im);
     if(!feat){ setStatus('No pude leer esa foto, intenta con otra.', false); return; }
     photoState.hash=feat.hash; photoState.hist=feat.hist; photoState.dom=feat.dom;
-    rankCatalog(myGen);
+    rankCatalog();
   };
-  im.onerror=function(){ setStatus('No pude leer esa foto, intenta con otra.', false); };
-  im.src=url;
+  im.onerror = function(){ setStatus('No pude leer esa foto, intenta con otra.', false); };
+  im.src = url;
 }
-async function rankCatalog(myGen){
-  setStatus('Buscando las más parecidas…', true);
-  await sleep(10);
-  if(myGen!==photoState.gen) return;
-  var items=getCatalogFromPage();
-  if(!items.length){ setStatus('No pude leer el catálogo, recarga la página.', false); return; }
-  // 1) Color, sin descargar nada: instantáneo
-  items.forEach(function(it){ it.cScore=colorScore(it.color, photoState.dom); });
-  items.sort(function(a,b){ return b.cScore-a.cScore; });
-  var top=items.slice(0, 60);
-  var scores={};
-  items.forEach(function(it){ scores[it.clave]=it.cScore*0.45; });
-  photoState.scores=scores;
-  applyRanking();
-  // 2) Forma + color, de 2 en 2, con pausa entre cada foto para no trabar
-  for(var i=0;i<top.length;i+=2){
-    if(myGen!==photoState.gen) return;
-    var batch=top.slice(i, i+2);
-    for(var k=0;k<batch.length;k++){
-      if(myGen!==photoState.gen) return;
-      var it=batch[k];
-      var thumb=await loadThumb(it.img, 4000);
-      if(myGen!==photoState.gen) return;
-      if(thumb){
-        var f=imgToFeatures(thumb);
-        if(f){
-          var v=1-(0.55*hashDist(photoState.hash, f.hash)+0.45*histDist(photoState.hist, f.hist));
-          if(v<0) v=0; if(v>1) v=1;
-          scores[it.clave]=0.55*v+0.45*it.cScore;
-        }
-      }
-      await sleep(0);
+function rankCatalog(){
+  setStatus('Buscando las más parecidas… (primero por color, luego por forma)', true);
+  getCSV().then(function(rows){
+    if(!rows || rows.length<2){ setStatus('No pude leer el catálogo para buscar por foto.', false); return; }
+    var items = [];
+    for(var i=1;i<rows.length;i++){
+      var r = rows[i]; if(!r || !r[0]) continue;
+      items.push({ clave:String(r[0]).trim(), img:r[1]||'', color:r[7]||'' });
     }
-    photoState.scores=scores;
-    applyRanking();
-    setStatus('Comparando… ' + Math.min(i+2, top.length) + ' / ' + top.length, true);
-    await sleep(10);
-  }
-  if(myGen!==photoState.gen) return;
-  photoState.scores=scores;
-  applyRanking();
-  setStatus('Las más parecidas primero · escribe para afinar · Backspace al inicio quita la foto', false);
+    items.forEach(function(it){ it.cScore = colorScore(it.color, photoState.dom); });
+    items.sort(function(a,b){ return b.cScore - a.cScore; });
+    var top = items.slice(0, 220);
+    var scores = {};
+    items.forEach(function(it){ scores[it.clave] = it.cScore * 0.45; });
+    var idx=0, done=0;
+    function nextBatch(){
+      var batch = top.slice(idx, idx+8); idx+=8;
+      if(!batch.length){ finish(); return; }
+      var promises = batch.map(function(it){
+        return loadImg(it.img).then(function(im){
+          if(!im) return;
+          var f = null; try{ f = imgToFeatures(im); }catch(_){ f=null; } if(!f) return;
+          var v = 1 - (0.55*hashDist(photoState.hash, f.hash) + 0.45*histDist(photoState.hist, f.hist));
+          if(v<0) v=0; if(v>1) v=1;
+          scores[it.clave] = 0.55*v + 0.45*it.cScore;
+        });
+      });
+      Promise.all(promises).catch(function(){}).then(function(){
+        done += batch.length;
+        setStatus('Comparando… ' + Math.min(done, top.length) + ' / ' + top.length + ' más cercanas por color', true);
+        photoState.scores = scores; applyRanking();
+        setTimeout(nextBatch, 10);
+      });
+    }
+    function finish(){
+      photoState.scores = scores;
+      applyRanking();
+      setStatus('Búsqueda por foto: las más parecidas primero · escribe palabras para afinar · Backspace al inicio quita la foto', false);
+    }
+    nextBatch();
+  }).catch(function(){
+    setStatus('No pude buscar por foto en este navegador, intenta recargar.', false);
+  });
 }
 var tries=0;
-var boot=setInterval(function(){ tries++; if(ensurePhotoUI()||tries>100) clearInterval(boot); }, 300);
+var boot = setInterval(function(){
+  tries++;
+  if(ensurePhotoUI() || tries>100) clearInterval(boot);
+}, 300);
 })();
 </script>
-
 </body>
 </html>
