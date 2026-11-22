@@ -5230,8 +5230,7 @@ function feat(img){
 function loadThumb(u){return new Promise(function(res){var im=new Image(); im.crossOrigin='anonymous'; var done=false; var to=setTimeout(function(){if(!done){done=true; res(null);}},5000); im.onload=function(){if(!done){done=true; clearTimeout(to); res(im);}}; im.onerror=function(){if(!done){done=true; clearTimeout(to); res(null);}}; im.src=proxyUrl(u);});}
 function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d;} return Math.sqrt(s);}
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
-var SIMILARIDAD_MINIMA=0.50; var SIMILARIDAD_MINIMA_GRIS=0.50; var MAX_SIMILARES=100;
-function umbralActual(){ var c=window.__tfQCol; if(!c) return SIMILARIDAD_MINIMA; var mx=Math.max(c.r,c.g,c.b), mn=Math.min(c.r,c.g,c.b); var sat=mx>10?(mx-mn)/mx:0; return sat<0.15 ? SIMILARIDAD_MINIMA_GRIS : SIMILARIDAD_MINIMA; }
+var SIMILARIDAD_MINIMA=0.60; var MAX_SIMILARES=50;
 function parseHuellaStr(s){ try{ if(!s) return null; var p=String(s).split('|'); if(p.length<5) return null; var hex=p[0]; var bits=[]; for(var i=0;i<hex.length;i++){ var v=parseInt(hex[i],16); bits.push((v>>3)&1,(v>>2)&1,(v>>1)&1,v&1); } var hist=p[1].split(',').map(function(x){return parseFloat(x)||0;}); var col=p[2].split(','); var color={r:parseFloat(col[0])||0,g:parseFloat(col[1])||0,b:parseFloat(col[2])||0}; var hog=null; if(p.length>=6&&p[5]){ hog=p[5].split(',').map(function(x){return parseFloat(x)||0;}); } var colCells=null; if(p.length>=7&&p[6]){ colCells=p[6].split(',').map(function(x){return parseFloat(x)||0;}); } var hueHist=null; if(p.length>=8&&p[7]){ hueHist=p[7].split(',').map(function(x){return parseFloat(x)||0;}); } var density=null; if(p.length>=9&&p[8]){ density=p[8].split(',').map(function(x){return parseFloat(x)||0;}); } return {bits:bits,hist:hist,color:color,aspect:parseFloat(p[3])||1,inkRatio:parseFloat(p[4])||0,hog:hog,colCells:colCells,hueHist:hueHist,density:density}; }catch(_){ return null; } }
 function simHuella(q, st){ if(!q||!st) return 0; var hd=0; var n=Math.min(q.hash.length, st.bits.length); for(var i=0;i<n;i++){ if(q.hash[i]!==st.bits[i]) hd++; } hd=hd/Math.max(1,n);
   // FIX: antes habia un corte duro en hd>0.42 que dejaba todo en 30% maximo.
@@ -5318,8 +5317,7 @@ function renderProgress(){
   var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); var q=(inp?inp.value:'').trim().toLowerCase();
   var list=(S.items||[]).filter(function(it){ return S.scored && S.scored[it.clave]; });
   list.sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
-  var _thr=umbralActual();
-  list=list.filter(function(it){ return ((S.scores||{})[it.clave]||0) >= _thr; });
+  list=list.filter(function(it){ return ((S.scores||{})[it.clave]||0) >= SIMILARIDAD_MINIMA; });
   if(q){
     list=list.filter(function(it){
       var hay=(it.clave+' '+it.cat+' '+it.keys+' '+it.color+' '+it.size).toLowerCase();
@@ -5401,8 +5399,7 @@ async function rank(my){
   }
   if(my!==S.gen) { S.comparing=false; return; }
   S.scores=scores; S.scored=scored; S.comparing=false;
-  var _thr2=umbralActual();
-  var shown=0; for(var k in scores){ if(scores[k]>=_thr2) shown++; }
+  var shown=0; for(var k in scores){ if(scores[k]>=SIMILARIDAD_MINIMA) shown++; }
   setStatus('Listo - '+shown+' similares (de '+withH.length+' con huella)', true);
   renderProgress();
 }
