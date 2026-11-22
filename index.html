@@ -5257,15 +5257,12 @@ function simHuella(q, st){ if(!q||!st) return 0; var hd=0; var n=Math.min(q.hash
   var denD=0, hasDen=false;
   if(q.density && st.density && q.density.length===st.density.length){ hasDen=true; var sd=0; for(var di=0;di<q.density.length;di++){ var dd2=q.density[di]-st.density[di]; sd+=dd2*dd2; } denD=Math.sqrt(sd/64); if(denD>1)denD=1; }
   var v;
-  // Pesos adaptativos: si tu foto es negra/gris, manda la forma, no el color.
-  // Si tu foto es de color, manda el color, para que no te traiga lobos negros para mariposas moradas.
-  var qEsGris = (qSat < 0.15);
-  if(hasHog){ if(hasHue&&hasDen){ if(qEsGris){ v=1-(0.30*hogD+0.25*hd+0.15*denD+0.10*colCellD+0.05*hueD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } else { v=1-(0.20*hogD+0.18*hd+0.20*hueD+0.15*colCellD+0.12*denD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } } else { v=1-(0.25*hogD+0.22*hd+0.22*colCellD+0.15*blockD+0.07*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } }
+  if(hasHog){ if(hasHue&&hasDen){ v=1-(0.20*hogD+0.18*hd+0.20*hueD+0.15*colCellD+0.12*denD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } else { v=1-(0.25*hogD+0.22*hd+0.22*colCellD+0.15*blockD+0.07*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } }
   else { var shapeD=(hd+projD+blockD)/3; v=1-(0.60*shapeD+0.22*colD+0.10*hsd+0.05*aspD+0.03*ratioD); }
-  // Candado de color: solo si tu foto es de color.
-  // Si tu foto es negra/gris, como mandala negro, NO lo aplicamos, para que si traiga mandalas de otros colores.
-  // Ej: mariposas moradas vs lobos negros -> si baja, porque tu foto si es de color.
-  if(!qEsGris){ if(satDiff>0.30 && hd>0.05){ v=Math.min(v, 0.55); } else if(satDiff>0.20 && hd>0.08){ v=Math.min(v, 0.58); } }
+  // Si tu foto es de color fuerte y la otra es gris/negra (o al reves), la bajamos aunque la forma sea parecida
+  // Ej: mariposas moradas vs lobos/leones negros -> no deben salir como similares
+  if(satDiff>0.30 && hd>0.05){ v=Math.min(v, 0.55); }
+  else if(satDiff>0.20 && hd>0.08){ v=Math.min(v, 0.58); }
   if(v<0)v=0; if(v>1)v=1;
   // Identica siempre primero: si la mancha es casi igual, es la misma foto aunque venga recomprimida
   if(hd<0.05 && hogD<0.30) v=1;
