@@ -5230,7 +5230,8 @@ function feat(img){
 function loadThumb(u){return new Promise(function(res){var im=new Image(); im.crossOrigin='anonymous'; var done=false; var to=setTimeout(function(){if(!done){done=true; res(null);}},5000); im.onload=function(){if(!done){done=true; clearTimeout(to); res(im);}}; im.onerror=function(){if(!done){done=true; clearTimeout(to); res(null);}}; im.src=proxyUrl(u);});}
 function histD(a,b){var s=0; for(var i=0;i<a.length;i++){var d=a[i]-b[i]; s+=d*d;} return Math.sqrt(s);}
 function hashD(a,b){var s=0; for(var i=0;i<Math.min(a.length,b.length);i++){if(a[i]!==b[i]) s++;} return s/Math.max(1,Math.min(a.length,b.length));}
-var SIMILARIDAD_MINIMA=0.60; var MAX_SIMILARES=50;
+var SIMILARIDAD_MINIMA=0.50; var SIMILARIDAD_MINIMA_GRIS=0.50; var MAX_SIMILARES=100;
+function umbralActual(){ var c=window.__tfQCol; if(!c) return SIMILARIDAD_MINIMA; var mx=Math.max(c.r,c.g,c.b), mn=Math.min(c.r,c.g,c.b); var sat=mx>10?(mx-mn)/mx:0; return sat<0.15 ? SIMILARIDAD_MINIMA_GRIS : SIMILARIDAD_MINIMA; }
 function parseHuellaStr(s){ try{ if(!s) return null; var p=String(s).split('|'); if(p.length<5) return null; var hex=p[0]; var bits=[]; for(var i=0;i<hex.length;i++){ var v=parseInt(hex[i],16); bits.push((v>>3)&1,(v>>2)&1,(v>>1)&1,v&1); } var hist=p[1].split(',').map(function(x){return parseFloat(x)||0;}); var col=p[2].split(','); var color={r:parseFloat(col[0])||0,g:parseFloat(col[1])||0,b:parseFloat(col[2])||0}; var hog=null; if(p.length>=6&&p[5]){ hog=p[5].split(',').map(function(x){return parseFloat(x)||0;}); } var colCells=null; if(p.length>=7&&p[6]){ colCells=p[6].split(',').map(function(x){return parseFloat(x)||0;}); } var hueHist=null; if(p.length>=8&&p[7]){ hueHist=p[7].split(',').map(function(x){return parseFloat(x)||0;}); } var density=null; if(p.length>=9&&p[8]){ density=p[8].split(',').map(function(x){return parseFloat(x)||0;}); } return {bits:bits,hist:hist,color:color,aspect:parseFloat(p[3])||1,inkRatio:parseFloat(p[4])||0,hog:hog,colCells:colCells,hueHist:hueHist,density:density}; }catch(_){ return null; } }
 function simHuella(q, st){ if(!q||!st) return 0; var hd=0; var n=Math.min(q.hash.length, st.bits.length); for(var i=0;i<n;i++){ if(q.hash[i]!==st.bits[i]) hd++; } hd=hd/Math.max(1,n);
   // FIX: antes habia un corte duro en hd>0.42 que dejaba todo en 30% maximo.
@@ -5257,12 +5258,15 @@ function simHuella(q, st){ if(!q||!st) return 0; var hd=0; var n=Math.min(q.hash
   var denD=0, hasDen=false;
   if(q.density && st.density && q.density.length===st.density.length){ hasDen=true; var sd=0; for(var di=0;di<q.density.length;di++){ var dd2=q.density[di]-st.density[di]; sd+=dd2*dd2; } denD=Math.sqrt(sd/64); if(denD>1)denD=1; }
   var v;
-  if(hasHog){ if(hasHue&&hasDen){ v=1-(0.20*hogD+0.18*hd+0.20*hueD+0.15*colCellD+0.12*denD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } else { v=1-(0.25*hogD+0.22*hd+0.22*colCellD+0.15*blockD+0.07*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } }
+  // Pesos adaptativos: si tu foto es negra/gris, manda la forma, no el color.
+  // Si tu foto es de color, manda el color, para que no te traiga lobos negros para mariposas moradas.
+  var qEsGris = (qSat < 0.15);
+  if(hasHog){ if(hasHue&&hasDen){ if(qEsGris){ v=1-(0.30*hogD+0.25*hd+0.15*denD+0.10*colCellD+0.05*hueD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } else { v=1-(0.20*hogD+0.18*hd+0.20*hueD+0.15*colCellD+0.12*denD+0.06*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } } else { v=1-(0.25*hogD+0.22*hd+0.22*colCellD+0.15*blockD+0.07*colD+0.04*hsd+0.03*aspD+0.02*ratioD); } }
   else { var shapeD=(hd+projD+blockD)/3; v=1-(0.60*shapeD+0.22*colD+0.10*hsd+0.05*aspD+0.03*ratioD); }
-  // Si tu foto es de color fuerte y la otra es gris/negra (o al reves), la bajamos aunque la forma sea parecida
-  // Ej: mariposas moradas vs lobos/leones negros -> no deben salir como similares
-  if(satDiff>0.30 && hd>0.05){ v=Math.min(v, 0.55); }
-  else if(satDiff>0.20 && hd>0.08){ v=Math.min(v, 0.58); }
+  // Candado de color: solo si tu foto es de color.
+  // Si tu foto es negra/gris, como mandala negro, NO lo aplicamos, para que si traiga mandalas de otros colores.
+  // Ej: mariposas moradas vs lobos negros -> si baja, porque tu foto si es de color.
+  if(!qEsGris){ if(satDiff>0.30 && hd>0.05){ v=Math.min(v, 0.55); } else if(satDiff>0.20 && hd>0.08){ v=Math.min(v, 0.58); } }
   if(v<0)v=0; if(v>1)v=1;
   // Identica siempre primero: si la mancha es casi igual, es la misma foto aunque venga recomprimida
   if(hd<0.05 && hogD<0.30) v=1;
@@ -5314,7 +5318,8 @@ function renderProgress(){
   var inp=document.querySelector('input[aria-label="Buscar tattoos"]'); var q=(inp?inp.value:'').trim().toLowerCase();
   var list=(S.items||[]).filter(function(it){ return S.scored && S.scored[it.clave]; });
   list.sort(function(a,b){ return ((S.scores||{})[b.clave]||-1)-((S.scores||{})[a.clave]||-1); });
-  list=list.filter(function(it){ return ((S.scores||{})[it.clave]||0) >= SIMILARIDAD_MINIMA; });
+  var _thr=umbralActual();
+  list=list.filter(function(it){ return ((S.scores||{})[it.clave]||0) >= _thr; });
   if(q){
     list=list.filter(function(it){
       var hay=(it.clave+' '+it.cat+' '+it.keys+' '+it.color+' '+it.size).toLowerCase();
@@ -5396,7 +5401,8 @@ async function rank(my){
   }
   if(my!==S.gen) { S.comparing=false; return; }
   S.scores=scores; S.scored=scored; S.comparing=false;
-  var shown=0; for(var k in scores){ if(scores[k]>=SIMILARIDAD_MINIMA) shown++; }
+  var _thr2=umbralActual();
+  var shown=0; for(var k in scores){ if(scores[k]>=_thr2) shown++; }
   setStatus('Listo - '+shown+' similares (de '+withH.length+' con huella)', true);
   renderProgress();
 }
